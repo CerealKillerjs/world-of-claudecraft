@@ -8968,6 +8968,26 @@ export interface WorldContent {
   // Water surface height for this map; absent = the built-in WATER_LEVEL (-4.5).
   // Read through waterLevel() in src/sim/world.ts, never directly.
   waterLevel?: number;
+  // A code-built world's own analytic ground (the abyss world pack). When set,
+  // it REPLACES the built-in generator and its pad chain wholesale; see
+  // WorldTerrainModel. Absent for the built-in world and every editor map
+  // (functions never survive the play-test JSON handoff, by design).
+  terrainModel?: WorldTerrainModel;
+}
+
+/** The ground of a code-built world that is not shaped like the built-in one.
+ *  Every member must be a pure function of its arguments (plus the seed), the
+ *  same determinism contract as terrainHeight itself: all three hosts and the
+ *  renderer sample it. */
+export interface WorldTerrainModel {
+  /** The finished terrain height (replaces terrainHeight's whole chain). */
+  height(x: number, z: number, seed: number): number;
+  /** Open sea at (x, z) for a water surface at waterY. Lets a world hold dry
+   *  ground below sea level (a pit) without it reading as water. */
+  isOpenSea(x: number, z: number, seed: number, waterY: number): boolean;
+  /** The ground palette at a point, for worlds whose biomes are not
+   *  rectangles (a round pit inside a round city). Absent: the zone's biome. */
+  biomeAt?(x: number, z: number): BiomeId;
 }
 
 /** The resolved storage price tables every sim price read consumes: bank slot

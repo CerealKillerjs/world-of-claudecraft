@@ -38,6 +38,7 @@ export {
 } from './content/world_quests';
 export type { WorldQuestDef } from './types';
 
+import { ABYSS_REGIONS } from './abyss';
 import {
   AMBERFALL_CAMPS,
   AMBERFALL_ITEMS,
@@ -899,6 +900,22 @@ export function isBuiltinWorldActive(): boolean {
 export function setActiveWorldContent(world: WorldContent | null): void {
   activeWorld = world ?? BUILTIN_WORLD;
   contentGeneration++;
+}
+
+// Every zone record that carries a translated name: the built-in zones plus
+// the named regions of the code-built world packs (whose own zone lists are
+// streaming tiles, see zoneRegionId below). Name and welcome lookups by id
+// resolve against this list, never against the active content.
+export const NAMED_ZONES: readonly ZoneDef[] = [...ZONES, ...ABYSS_REGIONS];
+
+// A zone id carrying an '@' suffix is one streaming TILE of a larger named
+// region (a round world pack tiles its regions into rectangles; see
+// src/sim/abyss/regions.ts): the part before the '@' is the region's id, which
+// names it, keys its translations, and decides when a player has entered a
+// new place. Plain ids are their own region.
+export function zoneRegionId(zoneId: string): string {
+  const at = zoneId.indexOf('@');
+  return at < 0 ? zoneId : zoneId.slice(0, at);
 }
 
 // Zone containing a world position (overworld only; clamps to the world

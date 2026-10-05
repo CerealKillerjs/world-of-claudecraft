@@ -7,8 +7,11 @@
 // are 1:1 with the reference work (metres converted to engine yards), the city
 // and island sizes are our own estimates (decided 2026-10-05: a 3 km city).
 //
-// Coordinates: the pit's axis is the world origin (x = 0, z = 0). North is +z
-// (the engine's convention). Y = 0 is the rim of the pit, so every point
+// Coordinates: every radius here is measured from the pit's axis, ABYSS_CENTER.
+// The island sits well south of the built-in world's rectangle so the two
+// worlds never share ground: built-in systems that still key off absolute
+// positions (walk lifts, border waters, scatter) simply never reach it. North
+// is +z (the engine's convention). Y = 0 is the rim of the pit, so every point
 // inside the pit has Y < 0 and its depth below the rim is simply -Y.
 
 /** Engine yards per metre (1 m = 1.0936 yd). */
@@ -21,6 +24,11 @@ export function metersToYards(m: number): number {
 export function yardsToMeters(yd: number): number {
   return yd / YARDS_PER_METER;
 }
+
+/** The pit's axis in world coordinates. The island (radius up to
+ *  WORLD_HALF_EXTENT) stays clear of the built-in world (z >= -180) and inside
+ *  the +/-8192 yd range the sim's per-cell memos pack. */
+export const ABYSS_CENTER = { x: 0, z: -4200 } as const;
 
 /** Radius of the pit's mouth: a ~1,000 m wide opening (1,094 yd across). */
 export const PIT_RADIUS = 547;

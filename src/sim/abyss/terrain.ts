@@ -25,6 +25,7 @@
 
 import { fbm2 } from '../rng';
 import {
+  ABYSS_CENTER,
   CITY_OUTER_RADIUS,
   COAST_OUTER_RADIUS,
   ISLAND_RADIUS,
@@ -98,7 +99,12 @@ export function spiralLedgeWidthAt(theta: number): number {
 export function spiralPointAt(phi: number): { x: number; z: number; y: number; theta: number } {
   const theta = SPIRAL_START_ANGLE + SPIRAL_DIR * phi;
   const r = wallFootRadius(phi) - SPIRAL_LEDGE_WIDTH / 2;
-  return { x: Math.cos(theta) * r, z: Math.sin(theta) * r, y: spiralHeightAt(phi), theta };
+  return {
+    x: ABYSS_CENTER.x + Math.cos(theta) * r,
+    z: ABYSS_CENTER.z + Math.sin(theta) * r,
+    y: spiralHeightAt(phi),
+    theta,
+  };
 }
 
 /** Radius of the layer 1 floor disc, where the last turn of ledge meets it. */
@@ -128,8 +134,22 @@ function pitHeight(x: number, z: number, r: number, seed: number): number {
     // between the rim edge and the first turn: the rim's own cliff
     const innerPhi = base;
     const innerFoot = wallFootRadius(innerPhi);
-    const t = (PIT_RADIUS - r) / Math.max(1e-6, PIT_RADIUS - innerFoot);
-    return RIM_HEIGHT + (spiralHeightAt(innerPhi) - RIM_HEIGHT) * cliffProfile(t);
+    const hInner = spiralHeightAt(innerPhi);
+    const span = PIT_RADIUS - innerFoot;
+    const d = PIT_RADIUS - r;
+    const cliff = RIM_HEIGHT + (hInner - RIM_HEIGHT) * cliffProfile(d / Math.max(1e-6, span));
+    const w = hangingQuarterWeight(base);
+    if (w <= 0) return cliff;
+    // the hanging quarter: a shelf of packed ground the city has crept out onto,
+    // sloping down into the pit, then its own sheer drop to the ledge below
+    const shelfH = hangingShelfHeight(d, x, z, seed);
+    const shelf =
+      d <= HANGING_SHELF_DEPTH
+        ? shelfH
+        : shelfH +
+          (hInner - shelfH) *
+            cliffProfile((d - HANGING_SHELF_DEPTH) / Math.max(1e-6, span - HANGING_SHELF_DEPTH));
+    return cliff + (shelf - cliff) * w;
   }
   const outerPhi = base + n * TAU;
   if (outerPhi >= SPIRAL_END_PHI) return LAYER1_FLOOR_Y + floorRough;
@@ -151,6 +171,33 @@ function pitHeight(x: number, z: number, r: number, seed: number): number {
   return innerPhi >= SPIRAL_END_PHI ? h + floorRough * cliffProfile(t) : h;
 }
 
+// The hanging quarter (design guide section 3): on the south side, just east of
+// where the spiral leaves the rim, the city's poorest quarter has crept out
+// over the edge onto a shelf that slopes down INTO the pit. It is the lowest
+// part of the city. The shelf sits where the rim's own cliff is widest (just
+// before the spiral wraps under its start), so it never overlaps a ledge.
+/** Unwrapped-angle window of the quarter (base angle, radians). */
+export const HANGING_QUARTER_FROM = Math.PI * 2 - 0.95;
+export const HANGING_QUARTER_TO = Math.PI * 2 - 0.2;
+const HANGING_QUARTER_FADE = 0.08;
+/** How far the shelf reaches in from the rim edge. */
+export const HANGING_SHELF_DEPTH = 80;
+/** Grade of the shelf as it runs down into the pit (walkable). */
+const HANGING_SHELF_GRADE = 0.45;
+
+function hangingQuarterWeight(base: number): number {
+  if (base <= HANGING_QUARTER_FROM || base >= HANGING_QUARTER_TO) return 0;
+  const a = (base - HANGING_QUARTER_FROM) / HANGING_QUARTER_FADE;
+  const b = (HANGING_QUARTER_TO - base) / HANGING_QUARTER_FADE;
+  const c = Math.min(1, a, b);
+  return c * c * (3 - 2 * c);
+}
+
+function hangingShelfHeight(d: number, x: number, z: number, seed: number): number {
+  const lumps = (fbm2(x * 0.08, z * 0.08, seed + 433, 2) - 0.5) * 1.5;
+  return RIM_HEIGHT - HANGING_SHELF_GRADE * Math.min(d, HANGING_SHELF_DEPTH) + lumps;
+}
+
 /** Number of terraces the city steps up in, from the rim ring to the edge. */
 export const CITY_TERRACES = 6;
 /** Rise of one terrace. */
@@ -167,7 +214,8 @@ const TERRACE_RUN = (CITY_OUTER_RADIUS - RIM_OUTER_RADIUS) / CITY_TERRACES;
 /** Height of the top terrace (the city's outer edge). */
 export const CITY_TOP_HEIGHT = RIM_HEIGHT + 2 + CITY_TERRACES * CITY_TERRACE_RISE;
 
-/** Distance in yards from (x, z) to the nearest avenue centre line. */
+/** Distance in yards from LOCAL (x, z) (relative to the pit axis) to the
+ *  nearest avenue centre line. */
 export function distanceToAvenue(x: number, z: number): number {
   const r = Math.hypot(x, z);
   const theta = Math.atan2(z, x) - SPIRAL_START_ANGLE;
@@ -224,8 +272,10 @@ function islandHeight(x: number, z: number, r: number, seed: number): number {
   return land + (SEA_FLOOR - land) * shore;
 }
 
-/** The finished abyss-world terrain height at (x, z). */
-export function abyssTerrainHeight(x: number, z: number, seed: number): number {
+/** The finished abyss-world terrain height at WORLD (x, z). */
+export function abyssTerrainHeight(wx: number, wz: number, seed: number): number {
+  const x = wx - ABYSS_CENTER.x;
+  const z = wz - ABYSS_CENTER.z;
   const r = Math.hypot(x, z);
   if (r < PIT_RADIUS) return pitHeight(x, z, r, seed);
   if (r <= CITY_OUTER_RADIUS) return cityHeight(x, z, r);
@@ -235,7 +285,7 @@ export function abyssTerrainHeight(x: number, z: number, seed: number): number {
 /** Open sea: only OUTSIDE the island. The pit sinks far below the sea surface
  *  yet holds no water, so the generic "ground below the waterline" sea rule
  *  must never apply inside it. */
-export function abyssIsOpenSea(x: number, z: number, seed: number, waterY: number): boolean {
-  if (Math.hypot(x, z) < CITY_OUTER_RADIUS) return false;
-  return abyssTerrainHeight(x, z, seed) < waterY;
+export function abyssIsOpenSea(wx: number, wz: number, seed: number, waterY: number): boolean {
+  if (Math.hypot(wx - ABYSS_CENTER.x, wz - ABYSS_CENTER.z) < CITY_OUTER_RADIUS) return false;
+  return abyssTerrainHeight(wx, wz, seed) < waterY;
 }

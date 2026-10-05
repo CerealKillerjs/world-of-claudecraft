@@ -9,8 +9,28 @@
 // `src/sim`-pure: imports only sibling sim types (no DOM/Three/render/ui/game/net,
 // no Math.random/Date.now), enforced by tests/architecture.test.ts.
 
-import type { Aura, DamageBreakBudget, Entity } from '../types';
+import type { Aura, AuraKind, DamageBreakBudget, Entity } from '../types';
 import { isVeilboundMarchActive } from './paladin_veilbound_state';
+
+// The hard-control aura kinds (moved from Sim.isControlAura, which now
+// delegates here; the seam's ctx.isControlAura still resolves through it).
+export function isControlAuraKind(kind: AuraKind): boolean {
+  return kind === 'stun' || kind === 'root' || kind === 'incapacitate' || kind === 'polymorph';
+}
+
+// What Ice Block turns away: hard control plus the soft crowd-control kinds
+// (moved from Sim.isIceBlockCrowdControlAura).
+export function isIceBlockCrowdControlAura(kind: AuraKind): boolean {
+  return (
+    isControlAuraKind(kind) ||
+    kind === 'silence' ||
+    kind === 'blind' ||
+    kind === 'disarm' ||
+    kind === 'slow' ||
+    kind === 'lockout' ||
+    kind === 'tongues'
+  );
+}
 
 // Some scripted encounter control is part of the encounter timeline rather
 // than ordinary combat CC. Player immunity, cleanse, dispel, control-break, and

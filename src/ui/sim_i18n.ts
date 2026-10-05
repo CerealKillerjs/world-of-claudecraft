@@ -113,6 +113,12 @@ const baseEnTable = {
   'error.vaultMaxUpgrades': 'Your vault cannot be upgraded further.',
   'log.vaultUnlocked': 'You unlock the Materials Vault.',
   'log.vaultUpgraded': 'You upgrade the Materials Vault.',
+  // Abyss expedition bag (src/sim/abyss/expedition_bag.ts): the death notice and
+  // the two ways it settles. Placeholder-free, so they register in the EXACT
+  // matcher automatically.
+  'log.expeditionBagLeftOnCorpse': 'Your expedition bag stays with your corpse.',
+  'log.expeditionBagRecovered': 'You recover your expedition bag.',
+  'log.expeditionBagLost': 'Your expedition bag is lost.',
   // Guild Bank (src/sim/guild_bank.ts): the officer-plus shared treasury +
   // item store. The error.* lines are the refusal toasts (too-far, quest-item,
   // and "Not enough money." reuse the existing rows above / the hud arm); the

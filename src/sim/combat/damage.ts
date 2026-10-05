@@ -23,6 +23,7 @@
 // `src/sim`-pure: no DOM/Three/render/ui/game/net imports, no Math.random/Date.now
 // (enforced by tests/architecture.test.ts).
 
+import { leaveExpeditionBagOnCorpse } from '../abyss/expedition_bag';
 import { ABILITIES, DELVES, GROUP_XP_BONUS, ITEMS, MOBS } from '../data';
 import * as deedsMod from '../deeds';
 import { recalcPlayerStats } from '../entity';
@@ -1421,6 +1422,11 @@ export function handleDeath(
     // LIVING player's death resets it, so a second pass over the same corpse
     // keeps the offer this death earned.
     if (!e.dead) e.pvpResurrect = false;
+    // A death below the abyss rim leaves the expedition bag on the body
+    // (src/sim/abyss/expedition_bag.ts). Living deaths only: a second pass over
+    // the same corpse has nothing left to drop.
+    const owner = e.dead ? null : ctx.resolve(e.id);
+    if (owner) leaveExpeditionBagOnCorpse(ctx, owner.meta, e);
   }
   vespersOnEntityDeath(ctx, e);
   afflictionOnDeath(ctx, e);

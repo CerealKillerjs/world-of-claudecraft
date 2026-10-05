@@ -25,6 +25,7 @@ import type { GroundAimPointXZ } from '../world_api/combat';
 import { abilityNeedsLineOfSight } from './ability_line_of_sight';
 import { offlineActionBarRestore } from './action_bar_restore';
 import { maybeAutoEquip } from './auto_equip';
+import * as expeditionBagMod from './abyss/expedition_bag';
 import * as bagsMod from './bags';
 import {
   addStacked,
@@ -93,6 +94,8 @@ import {
 } from './combat/casting_lifecycle';
 import {
   hasUnbreakableMovementLock,
+  isControlAuraKind,
+  isIceBlockCrowdControlAura,
   isRooted,
   isStunned,
   isUnbreakableControlAura,
@@ -1338,6 +1341,8 @@ export interface PlayerMeta extends worldQuestState.WorldQuestPlayerState {
   // serialized, exactly like the match-side snapshot it shares its shape with: a
   // relog is a fresh session, and a warlock re-summons their demon on login.
   deathPet?: PetReturnSnapshot;
+  // Abyss finds at stake + a corpse's waiting bag (src/sim/abyss/expedition_bag.ts).
+  expeditionBag?: expeditionBagMod.ExpeditionBagState;
   skin: number; // appearance index into the render SKINS[player_<cls>]; persisted, synced
   skinCatalog: SkinCatalog;
   // Worn account mount skin (content/mount_skins.ts); persisted, mirrored to
@@ -3448,6 +3453,7 @@ export class Sim {
     // Resume a ghost: a player who logged out as a released spirit comes back as a
     // ghost at the graveyard (corpse still marked), not freely resurrected. dead stays
     // unset for a non-ghost logout (the pre-existing revive-on-relog behavior).
+    expeditionBagMod.restoreExpeditionBag(meta, savedState?.expeditionBag);
     if (savedState?.ghost) {
       player.dead = true;
       player.ghost = true;
@@ -3888,6 +3894,7 @@ export class Sim {
       // Death state: a released spirit resumes its corpse run on relog, and a
       // dead-but-unreleased corpse auto-releases on load (see addPlayer).
       dead: e.dead,
+      ...expeditionBagMod.saveExpeditionBag(meta),
       ghost: e.ghost,
       corpsePos: e.corpsePos ? { x: e.corpsePos.x, z: e.corpsePos.z } : null,
       // The Keeper's Toll persists across logout (it cannot be shed by relogging).
@@ -5973,6 +5980,7 @@ export class Sim {
       vehicleMod.tickVehicle(this.ctx, meta, p);
       if (!p.dead) {
         ensureWarriorStance(this.ctx, p, meta);
+        expeditionBagMod.tickExpeditionBag(this.ctx, meta, p);
         this.updatePlayerMovement(p, meta);
         updateVeilboundMarchMovement(this.ctx, p);
         completeVeilboundMarch(this.ctx, p);
@@ -6290,18 +6298,7 @@ export class Sim {
     return !!template && (template.canSwim === true || template.family === 'mudfin');
   }
   private isControlAura(kind: AuraKind): boolean {
-    return kind === 'stun' || kind === 'root' || kind === 'incapacitate' || kind === 'polymorph';
-  }
-  private isIceBlockCrowdControlAura(kind: AuraKind): boolean {
-    return (
-      this.isControlAura(kind) ||
-      kind === 'silence' ||
-      kind === 'blind' ||
-      kind === 'disarm' ||
-      kind === 'slow' ||
-      kind === 'lockout' ||
-      kind === 'tongues'
-    );
+    return isControlAuraKind(kind);
   }
   private isIceBlocked(target: Entity): boolean {
     return target.auras.some(
@@ -6907,7 +6904,7 @@ export class Sim {
     }
     if (
       this.isIceBlocked(target) &&
-      this.isIceBlockCrowdControlAura(aura.kind) &&
+      isIceBlockCrowdControlAura(aura.kind) &&
       aura.sourceId !== target.id &&
       !isUnbreakableControlAura(aura)
     )
@@ -8078,6 +8075,7 @@ export class Sim {
     // shelf are why this passes `count` rather than 1. Pinned in
     // tests/reliquary_content.test.ts.
     if (!opts?.movement) noteRelicObtain(meta, itemId, count);
+    expeditionBagMod.noteExpeditionGrant(meta, r.e, itemId, count, opts);
     emitInventoryReceipt(this.ctx, meta.entityId, itemId, def?.name ?? itemId, count, opts);
     this.ctx.onInventoryChangedForQuests(meta);
     if (
@@ -8125,6 +8123,7 @@ export class Sim {
     // per call by definition, an id is either new or it is not) a windfall of
     // three copies really is three acquisitions.
     if (!opts?.movement) noteRelicObtain(meta, itemId, count);
+    expeditionBagMod.noteExpeditionGrant(meta, r.e, itemId, count, opts);
     emitInventoryReceipt(
       this.ctx,
       meta.entityId,

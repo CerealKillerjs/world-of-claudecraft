@@ -1289,6 +1289,8 @@ describe('S3: every sim.ts emit is recognized (drift guard)', () => {
     // bag-payload-refuses-not-strips guard). None of this file's emits were
     // previously under the drift guard.
     fs.readFileSync(path.resolve(process.cwd(), 'src/sim/bags.ts'), 'utf8'),
+    // The abyss expedition bag's death, recover, and lost notices.
+    fs.readFileSync(path.resolve(process.cwd(), 'src/sim/abyss/expedition_bag.ts'), 'utf8'),
     // L1: the loot-distribution layer's player-facing loot emits ("You loot ...",
     // "Everyone passed on ...", "<name> wins ...").
     fs.readFileSync(path.resolve(process.cwd(), 'src/sim/loot/loot_roll.ts'), 'utf8'),

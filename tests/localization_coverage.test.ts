@@ -15,9 +15,9 @@ import {
   DUNGEONS,
   ITEMS,
   MOBS,
+  NAMED_ZONES,
   NPCS,
   QUESTS,
-  ZONES,
 } from '../src/sim/data';
 import type { PlayerClass } from '../src/sim/types';
 import { abilityBuffValue } from '../src/ui/ability_damage';
@@ -885,10 +885,12 @@ describe('i18n Localization Key Coverage', () => {
     expect(entityCount('questObjective', 'label')).toBe(
       Object.values(QUESTS).reduce((sum, quest) => sum + quest.objectives.length, 0),
     );
-    expect(entityCount('zone', 'name')).toBe(ZONES.length);
-    expect(entityCount('zone', 'welcome')).toBe(ZONES.length);
+    // NAMED_ZONES: the built-in zones plus every world pack's named regions
+    // (a pack streams rectangle tiles that borrow their region's text)
+    expect(entityCount('zone', 'name')).toBe(NAMED_ZONES.length);
+    expect(entityCount('zone', 'welcome')).toBe(NAMED_ZONES.length);
     expect(entityCount('zonePoi', 'label')).toBe(
-      ZONES.reduce((sum, zone) => sum + zone.pois.length, 0),
+      NAMED_ZONES.reduce((sum, zone) => sum + zone.pois.length, 0),
     );
     expect(entityCount('dungeon', 'name')).toBe(Object.keys(DUNGEONS).length);
     expect(entityCount('dungeon', 'enterText')).toBe(Object.keys(DUNGEONS).length);
@@ -1151,10 +1153,10 @@ describe('i18n Localization Key Coverage', () => {
       Object.keys(NPCS).length * 3 +
       Object.keys(QUESTS).length * 3 +
       Object.values(QUESTS).reduce((sum, quest) => sum + quest.objectives.length, 0) +
-      ZONES.length * 2 +
+      NAMED_ZONES.length * 2 +
       // The optional town-done line (ZoneDef.welcomeDone) only where authored.
-      ZONES.filter((zone) => zone.welcomeDone !== undefined).length +
-      ZONES.reduce((sum, zone) => sum + zone.pois.length, 0) +
+      NAMED_ZONES.filter((zone) => zone.welcomeDone !== undefined).length +
+      NAMED_ZONES.reduce((sum, zone) => sum + zone.pois.length, 0) +
       Object.keys(DUNGEONS).length * 3 +
       Object.keys(DELVES).length * 3 +
       // Ravenpost authored letters: welcome + Heroic Marks reward + Wyrmfall

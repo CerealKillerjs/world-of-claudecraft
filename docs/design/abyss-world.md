@@ -191,7 +191,8 @@ cadáver o resurrección con penalización (`src/sim/spirit.ts`). Propuesta sobr
   cadáver recupera la bolsa; resucitar en el campamento sin ir a buscarla la pierde.
 - Como volver a subir también cuesta el Peso, recuperar el cadáver de una capa honda es
   en sí una expedición peligrosa.
-- Qué más se puede perder (equipo puesto, dinero, experiencia) es la decisión abierta 5.
+- Al principio **solo se pierde la bolsa** (decidido el 2026-10-05). Perder además equipo,
+  dinero o experiencia se reconsidera después de probarlo.
 
 ## 5. Qué se reutiliza del juego actual
 
@@ -254,7 +255,8 @@ Tomadas (2026-10-05):
 - Escala vertical 1:1 en todas las capas, sin compresión.
 - Ciudad de 3 km de diámetro alrededor de la abertura de 1 km.
 - Se sube siempre a pie, pagando el Peso; existe un objeto raro de regreso como excepción.
-- Morir dentro del pozo arriesga perder lo que se lleva (sección 4.5).
+- Morir dentro del pozo deja la bolsa de expedición en el cadáver; al principio no se
+  pierde nada más (sección 4.5).
 
 Abiertas:
 
@@ -264,5 +266,3 @@ Abiertas:
 3. Idioma de los textos del juego: inglés en el catálogo (regla del repo) con español
    como primera traducción.
 4. Cómo se obtiene el objeto raro de regreso (se define más adelante).
-5. Qué se pierde al morir además de la bolsa de expedición: equipo puesto, dinero o
-   experiencia. Recomendada: solo la bolsa al principio, y medir antes de endurecerlo.

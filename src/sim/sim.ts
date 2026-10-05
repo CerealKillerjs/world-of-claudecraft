@@ -23,9 +23,9 @@ import type {
 } from '../world_api';
 import type { GroundAimPointXZ } from '../world_api/combat';
 import { abilityNeedsLineOfSight } from './ability_line_of_sight';
+import * as expeditionBagMod from './abyss/expedition_bag';
 import { offlineActionBarRestore } from './action_bar_restore';
 import { maybeAutoEquip } from './auto_equip';
-import * as expeditionBagMod from './abyss/expedition_bag';
 import * as bagsMod from './bags';
 import {
   addStacked,
@@ -3450,10 +3450,10 @@ export class Sim {
       applyUnstuckSickness(this.ctx, player, savedState.unstuckSickness);
       player.hp = Math.min(player.hp, player.maxHp);
     }
+    expeditionBagMod.restoreExpeditionBag(meta, savedState?.expeditionBag);
     // Resume a ghost: a player who logged out as a released spirit comes back as a
     // ghost at the graveyard (corpse still marked), not freely resurrected. dead stays
     // unset for a non-ghost logout (the pre-existing revive-on-relog behavior).
-    expeditionBagMod.restoreExpeditionBag(meta, savedState?.expeditionBag);
     if (savedState?.ghost) {
       player.dead = true;
       player.ghost = true;
@@ -8123,7 +8123,7 @@ export class Sim {
     // per call by definition, an id is either new or it is not) a windfall of
     // three copies really is three acquisitions.
     if (!opts?.movement) noteRelicObtain(meta, itemId, count);
-    expeditionBagMod.noteExpeditionGrant(meta, r.e, itemId, count, opts);
+    expeditionBagMod.noteExpeditionGrant(meta, r.e, itemId, count, opts, instance);
     emitInventoryReceipt(
       this.ctx,
       meta.entityId,

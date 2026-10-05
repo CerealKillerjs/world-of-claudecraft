@@ -6,6 +6,7 @@
 // loop are the live code paths.
 
 import { describe, expect, it } from 'vitest';
+import { stripLegendaryNames } from '../server/clear_item_name';
 import { ABYSS_PIT, isInAbyss } from '../src/sim/abyss/abyss_region';
 import {
   expeditionBagUnits,
@@ -13,6 +14,7 @@ import {
   saveExpeditionBag,
   tickExpeditionBag,
 } from '../src/sim/abyss/expedition_bag';
+import { rekeyInstanceSigner } from '../src/sim/character_rename';
 import { BUILTIN_WORLD } from '../src/sim/data';
 import { Sim } from '../src/sim/sim';
 import { CORPSE_REZ_RANGE } from '../src/sim/spirit';
@@ -182,6 +184,9 @@ describe('expedition bag: recovering or losing it', () => {
     const p = place(sim, IN_PIT); // the ghost runs back to its body
     sim.resurrectAtCorpse();
     expect(p.dead).toBe(false);
+    // the revive grounds the body; the placeholder pit is not carved yet, so put
+    // it back on the corpse spot the real pit floor would hold it at
+    place(sim, IN_PIT);
     sim.drainEvents();
     tickExpeditionBag(sim.ctx, meta(sim), p);
 
@@ -225,7 +230,7 @@ describe('expedition bag: recovering or losing it', () => {
     tickExpeditionBag(sim.ctx, meta(sim), p);
     expect(sim.countItem('wolf_fang')).toBe(0);
     expect(notices(sim.drainEvents())).toEqual(['Your expedition bag is lost.']);
-    expect(meta(sim).expeditionBag?.corpse).toBeNull();
+    expect(meta(sim).expeditionBag).toBeUndefined();
   });
 
   it('recovery is gated on the corpse-run range', () => {
@@ -241,7 +246,129 @@ describe('expedition bag: recovering or losing it', () => {
   });
 });
 
+describe('expedition bag: only the finds themselves', () => {
+  it('never takes a pre-owned instance of the same item in place of the found one', () => {
+    const sim = makeSim();
+    sim.addItemInstance('linen_pouch', { signer: 'Heirloom' }, sim.playerId, 1);
+    place(sim, IN_PIT);
+    sim.addItemInstance('linen_pouch', { signer: 'Found' }, sim.playerId, 1);
+    dieInPlace(sim);
+    const left = meta(sim).inventory.filter((s) => s.itemId === 'linen_pouch');
+    expect(left.map((s) => s.instance)).toEqual([{ signer: 'Heirloom' }]);
+    expect(meta(sim).expeditionBag?.corpse?.slots.map((s) => s.instance)).toEqual([
+      { signer: 'Found' },
+    ]);
+  });
+
+  it('a found instance that was given away is not paid back from another one', () => {
+    const sim = makeSim();
+    sim.addItemInstance('linen_pouch', { signer: 'Heirloom' }, sim.playerId, 1);
+    place(sim, IN_PIT);
+    sim.addItemInstance('linen_pouch', { signer: 'Found' }, sim.playerId, 1);
+    // the find leaves the bags (traded, sold) before the death
+    const idx = meta(sim).inventory.findIndex((s) => s.instance?.signer === 'Found');
+    meta(sim).inventory.splice(idx, 1);
+    dieInPlace(sim);
+    expect(sim.countItem('linen_pouch')).toBe(1);
+    expect(meta(sim).expeditionBag).toBeUndefined();
+  });
+
+  it('plain finds are paid in plain copies, never an instanced copy', () => {
+    const sim = makeSim();
+    sim.addItemInstance('linen_pouch', { signer: 'Heirloom' }, sim.playerId, 1);
+    place(sim, IN_PIT);
+    sim.addItem('linen_pouch', 1);
+    dieInPlace(sim);
+    const left = meta(sim).inventory.filter((s) => s.itemId === 'linen_pouch');
+    expect(left.map((s) => s.instance)).toEqual([{ signer: 'Heirloom' }]);
+  });
+
+  it('locking a find does not hide it from the bag, and the lock comes back with it', () => {
+    const sim = makeSim();
+    place(sim, IN_PIT);
+    sim.addItemInstance('linen_pouch', { signer: 'Found' }, sim.playerId, 1);
+    const slot = meta(sim).inventory.find((s) => s.itemId === 'linen_pouch')!;
+    slot.instance = { ...slot.instance, locked: true };
+    dieInPlace(sim);
+    expect(sim.countItem('linen_pouch')).toBe(0);
+    sim.releaseSpirit();
+    const p = place(sim, IN_PIT);
+    sim.resurrectAtCorpse();
+    place(sim, IN_PIT);
+    tickExpeditionBag(sim.ctx, meta(sim), p);
+    const back = meta(sim).inventory.find((s) => s.itemId === 'linen_pouch');
+    expect(back?.instance).toEqual({ signer: 'Found', locked: true });
+  });
+
+  it('a second death before any living tick settles the first bag, then drops it again', () => {
+    const sim = makeSim();
+    place(sim, IN_PIT);
+    sim.addItem('wolf_fang', 3);
+    dieInPlace(sim);
+    sim.releaseSpirit();
+    place(sim, IN_PIT);
+    sim.resurrectAtCorpse();
+    place(sim, IN_PIT);
+    dieInPlace(sim); // killed again on the spot, before the tick ran
+    expect(sim.countItem('wolf_fang')).toBe(0);
+    expect(meta(sim).expeditionBag?.corpse?.slots).toMatchObject([
+      { itemId: 'wolf_fang', count: 3 },
+    ]);
+  });
+
+  it('a revive straight above the corpse is not the corpse (the pit is deep)', () => {
+    const sim = makeSim();
+    place(sim, IN_PIT);
+    sim.addItem('wolf_fang', 1);
+    dieInPlace(sim);
+    const p = sim.player as Entity;
+    p.dead = false;
+    place(sim, { ...IN_PIT, y: IN_PIT.y + CORPSE_REZ_RANGE + 1 });
+    tickExpeditionBag(sim.ctx, meta(sim), p);
+    expect(sim.countItem('wolf_fang')).toBe(0);
+  });
+});
+
 describe('expedition bag: persistence', () => {
+  it('the moderated-name strip reaches the corpse bag and the finds at stake', () => {
+    const sim = makeSim();
+    place(sim, IN_PIT);
+    sim.addItemInstance('linen_pouch', { name: 'Rude' }, sim.playerId, 1);
+    dieInPlace(sim);
+    sim.player.dead = false;
+    sim.addItemInstance('linen_pouch', { name: 'Ruder' }, sim.playerId, 1);
+    const state = sim.serializeCharacter(sim.playerId)!;
+    expect(stripLegendaryNames(state, { kind: 'all' })).toBe(3); // corpse, find, and bags
+    expect(state.expeditionBag?.corpse?.slots[0].instance?.name).toBeUndefined();
+    expect(state.expeditionBag?.found?.[0].instance.name).toBeUndefined();
+  });
+
+  it('keeps crafted provenance on a corpse bag across a relog', () => {
+    const sim = makeSim();
+    place(sim, IN_PIT);
+    sim.addItem('linen_pouch', 1, sim.playerId, { craftedRecipeId: 'tailor_linen_pouch' });
+    dieInPlace(sim);
+    const state = sim.serializeCharacter(sim.playerId)!;
+    const sim2 = new Sim({ seed: 42, playerClass: 'warrior', noPlayer: true, world: TEST_WORLD });
+    const pid = sim2.addPlayer('warrior', 'Relog', { state });
+    expect(sim2.meta(pid)!.expeditionBag?.corpse?.slots).toMatchObject([
+      { itemId: 'linen_pouch', count: 1, craftedRecipeId: 'tailor_linen_pouch' },
+    ]);
+  });
+
+  it('a rename re-keys signers inside the corpse bag and the finds at stake', () => {
+    const sim = makeSim();
+    place(sim, IN_PIT);
+    sim.addItemInstance('linen_pouch', { signer: 'Oldname' }, sim.playerId, 1);
+    dieInPlace(sim);
+    sim.player.dead = false; // standing again (not yet ticked), finds one more
+    sim.addItemInstance('linen_pouch', { signer: 'Oldname' }, sim.playerId, 1);
+    const state = sim.serializeCharacter(sim.playerId)!;
+    expect(rekeyInstanceSigner(state, 'Oldname', 'Newname')).toBe(true);
+    expect(state.expeditionBag?.corpse?.slots[0].instance?.signer).toBe('Newname');
+    expect(state.expeditionBag?.found?.[0].instance.signer).toBe('Newname');
+  });
+
   it('a save with nothing at stake carries no expeditionBag key', () => {
     const sim = makeSim();
     const state = sim.serializeCharacter(sim.playerId)!;
@@ -275,7 +402,7 @@ describe('expedition bag: persistence', () => {
       ledger: { wolf_fang: 2, bad_neg: -1, bad_frac: 1.5 },
       corpse: { pos: { x: 1, y: 2, z: 3 }, slots: [] },
     });
-    expect(m.expeditionBag).toEqual({ ledger: { wolf_fang: 2 }, corpse: null });
+    expect(m.expeditionBag).toEqual({ ledger: { wolf_fang: 2 }, found: [], corpse: null });
     expect(saveExpeditionBag(m)).toEqual({ expeditionBag: { ledger: { wolf_fang: 2 } } });
   });
 });

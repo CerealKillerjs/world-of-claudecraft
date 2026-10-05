@@ -94,6 +94,15 @@ export function rekeyInstanceSigner(
   for (const instance of Object.values(state.equipmentInstances ?? {})) {
     if (rekeySigner(instance, oldName, newName)) changed = true;
   }
+  // The abyss expedition bag (src/sim/abyss/expedition_bag.ts): a corpse bag
+  // waiting to be recovered and the finds still at stake both carry payloads.
+  for (const slot of state.expeditionBag?.corpse?.slots ?? []) {
+    if (rekeyMaterialSignature(slot, oldName, newName)) changed = true;
+    if (rekeySigner(slot.instance, oldName, newName)) changed = true;
+  }
+  for (const find of state.expeditionBag?.found ?? []) {
+    if (rekeySigner(find.instance, oldName, newName)) changed = true;
+  }
   for (const slot of Object.values(state.toolEffectSlots ?? {})) {
     if (slot && slot.craftedBy === oldName) {
       slot.craftedBy = newName;

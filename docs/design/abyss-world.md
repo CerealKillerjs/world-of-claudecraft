@@ -127,8 +127,11 @@ y el castigo leen esa misma cifra. Consecuencias de diseño:
   vendedor y punto de guardado), para que una sesión pueda terminar a medio descenso.
 - La gran pared de la capa 3 mide 4.812 yd de alto a escala real: se baja por
   repisas, cuevas y sogas, y necesita el modo de escalada de la fase 6.
-- Subir es caro a propósito (el Peso). La forma de volver a la superficie desde capas
-  profundas es la decisión abierta 4.
+- **Se sube siempre a pie** (decidido el 2026-10-05), pagando el Peso. Subir es caro
+  a propósito: el jugador tiene que medir cuánto baja según lo que arriesga perder si
+  muere (sección 4.5), en vez de aventurarse sin pensar.
+- Existe un **objeto raro de regreso** a la superficie como excepción. Cómo se obtiene
+  queda para más adelante (decisión abierta 4).
 
 ### 4.3 El castigo al subir (nombre de trabajo: "el Peso")
 
@@ -173,6 +176,22 @@ nombres de materiales, que fijan la capa máxima permitida:
 
 El límite se aplica como una puerta de misión (attunement) al pasar de capa, igual que
 las mazmorras con requisitos.
+
+### 4.5 Morir dentro del pozo
+
+Intención (decidida el 2026-10-05): morir bajo el borde tiene que costar algo que el
+jugador pueda perder de verdad, para que cada metro de bajada sea una apuesta.
+
+Hoy el motor usa la muerte clásica sin pérdida de objetos: fantasma, carrera hasta el
+cadáver o resurrección con penalización (`src/sim/spirit.ts`). Propuesta sobre esa base:
+
+- Bajo el borde, lo que el jugador lleva en una **bolsa de expedición** (hallazgos y
+  materiales recogidos en el pozo) se queda en el cadáver al morir.
+- La carrera hasta el cadáver sale del último campamento por el que pasó. Llegar al
+  cadáver recupera la bolsa; resucitar en el campamento sin ir a buscarla la pierde.
+- Como volver a subir también cuesta el Peso, recuperar el cadáver de una capa honda es
+  en sí una expedición peligrosa.
+- Qué más se puede perder (equipo puesto, dinero, experiencia) es la decisión abierta 5.
 
 ## 5. Qué se reutiliza del juego actual
 
@@ -234,6 +253,8 @@ Tomadas (2026-10-05):
 
 - Escala vertical 1:1 en todas las capas, sin compresión.
 - Ciudad de 3 km de diámetro alrededor de la abertura de 1 km.
+- Se sube siempre a pie, pagando el Peso; existe un objeto raro de regreso como excepción.
+- Morir dentro del pozo arriesga perder lo que se lleva (sección 4.5).
 
 Abiertas:
 
@@ -242,7 +263,6 @@ Abiertas:
 2. Monturas dentro del pozo: no (recomendada) o solo en capa 1.
 3. Idioma de los textos del juego: inglés en el catálogo (regla del repo) con español
    como primera traducción.
-4. Regreso a la superficie desde capas profundas: subir a pie pagando el Peso (fiel a la
-   obra), o un objeto raro de regreso que se gana en cada campamento. Recomendada: a pie
-   hasta la capa 2 y el objeto raro desde la capa 3, para que una expedición fallida no
-   cueste horas de vuelta.
+4. Cómo se obtiene el objeto raro de regreso (se define más adelante).
+5. Qué se pierde al morir además de la bolsa de expedición: equipo puesto, dinero o
+   experiencia. Recomendada: solo la bolsa al principio, y medir antes de endurecerlo.

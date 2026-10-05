@@ -7,9 +7,10 @@ import {
   ITEM_SETS,
   ITEMS,
   MOBS,
+  NAMED_ZONES,
   NPCS,
   QUESTS,
-  ZONES,
+  zoneRegionId,
 } from '../sim/data';
 import type { ItemDef, PlayerClass } from '../sim/types';
 import {
@@ -323,14 +324,16 @@ function canonicalEntityText(request: EntityTranslationRequest): string {
         `${request.questId}.${request.objectiveIndex}`
       );
     case 'zone': {
-      const zone = ZONES.find((candidate) => candidate.id === request.id);
+      const id = zoneRegionId(request.id); // a world pack's tile names as its region
+      const zone = NAMED_ZONES.find((candidate) => candidate.id === id);
       if (!zone) return request.id;
       if (request.field === 'welcome') return zone.welcome;
       if (request.field === 'welcomeDone') return zone.welcomeDone ?? request.id;
       return zone.name;
     }
     case 'zonePoi': {
-      const zone = ZONES.find((candidate) => candidate.id === request.zoneId);
+      const id = zoneRegionId(request.zoneId);
+      const zone = NAMED_ZONES.find((candidate) => candidate.id === id);
       return zone?.pois[request.poiIndex]?.label ?? `${request.zoneId}.pois.${request.poiIndex}`;
     }
     case 'dungeon': {
@@ -378,9 +381,9 @@ export function entityTranslationKey(request: EntityTranslationRequest): string 
     case 'questObjective':
       return `entities.quests.${entityPathSegment(request.questId)}.objectives.${request.objectiveIndex}.label`;
     case 'zone':
-      return `entities.zones.${entityPathSegment(request.id)}.${request.field}`;
+      return `entities.zones.${entityPathSegment(zoneRegionId(request.id))}.${request.field}`;
     case 'zonePoi':
-      return `entities.zones.${entityPathSegment(request.zoneId)}.pois.${request.poiIndex}.label`;
+      return `entities.zones.${entityPathSegment(zoneRegionId(request.zoneId))}.pois.${request.poiIndex}.label`;
     case 'dungeon':
       return `entities.dungeons.${entityPathSegment(request.id)}.${request.field}`;
     case 'delve':
@@ -526,7 +529,7 @@ export function poiMarkLabel(markId: string): string | null {
   const parts = markId.split(':');
   if (parts.length !== 3 || parts[0] !== 'poi') return null;
   const [, zoneId, poiId] = parts;
-  const zone = ZONES.find((z) => z.id === zoneId);
+  const zone = NAMED_ZONES.find((z) => z.id === zoneId);
   const poiIndex = zone?.pois.findIndex((p) => p.id === poiId) ?? -1;
   if (poiIndex < 0) return null;
   return zonePoiLabel(zoneId, poiIndex);
@@ -741,7 +744,7 @@ export function entityTranslationManifest(): EntityTranslationManifestEntry[] {
       );
     });
   }
-  for (const zone of [...ZONES].sort(compareById)) {
+  for (const zone of [...NAMED_ZONES].sort(compareById)) {
     entries.push(
       entry(
         'zone',

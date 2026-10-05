@@ -550,7 +550,10 @@ const MONOLITHS: MonolithRow[] = [
     // Lowered 18029 -> 18024 at the merge with PvP Resurrect: the death-screen
     // decisions (and the mirrored corpse range constant) moved to
     // src/ui/hud/death/death_prompt_view.ts. wc -l on the merged tree.
-    ceiling: 18024,
+    // LOWERED 18024 -> 18021 by the abyss world pack: the zone-entry banner
+    // test moved to zone_region_entry.ts (it now compares regions, so a
+    // world tiled into many zone records still announces each region once).
+    ceiling: 18021,
     seam: 'pure view core + thin painter on PainterHost (src/ui/CLAUDE.md)',
   },
   {
@@ -1942,7 +1945,11 @@ const MONOLITHS: MonolithRow[] = [
     // LOWERED 5194 -> 5188 at the merge of release/v0.44.0 into the
     // Eastbrook ferry branch (PR 4225): the release's own extractions plus the
     // ferry's wiring, measured with wc -l on the merged tree. Exact count, zero slack.
-    ceiling: 5188,
+    // LOWERED 5188 -> 5154 by the abyss world pack: the zone-biome lookups
+    // (zoneBiomeAt, the editor paint override biomeAt) moved to the
+    // biome_at.ts leaf, paying for the terrain-model dispatch in terrainHeight
+    // and the open-sea memo. Exact count, zero slack.
+    ceiling: 5154,
     seam: 'zone/terrain data as content records; logic as sim sibling modules',
   },
   {

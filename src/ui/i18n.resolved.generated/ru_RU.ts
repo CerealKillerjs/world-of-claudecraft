@@ -23734,6 +23734,39 @@ export const ru_RU: EnTranslations = {
             "label": "Полоса испытаний"
           }
         }
+      },
+      "vaharra_isle": {
+        "name": "Vaharra Isle",
+        "welcome": "Farmland and sea wind. Every road on the island runs uphill toward the city.",
+        "pois": {
+          "0": {
+            "label": "South Harbor"
+          }
+        }
+      },
+      "rimholt": {
+        "name": "Rimholt",
+        "welcome": "The city of the rim. Every street runs down toward the edge.",
+        "pois": {
+          "0": {
+            "label": "The Descent Arch"
+          },
+          "1": {
+            "label": "The Hanging Quarter"
+          },
+          "2": {
+            "label": "Rim Market"
+          }
+        }
+      },
+      "the_sounding": {
+        "name": "The Sounding",
+        "welcome": "You are below the rim now. The way back up costs more than the way down.",
+        "pois": {
+          "0": {
+            "label": "First Camp"
+          }
+        }
       }
     },
     "dungeons": {

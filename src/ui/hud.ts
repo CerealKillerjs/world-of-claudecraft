@@ -957,6 +957,7 @@ import { formatXp, type XpBarView, xpBarView } from './xp_bar';
 import { XpBarPainter } from './xp_bar_painter';
 import { YumiMatchPainter } from './yumi_match_painter';
 import { zoneEntryLine } from './zone_entry_line_core';
+import { enteredNewZoneRegion } from './zone_region_entry';
 
 let lpAdvancedLast = -1;
 
@@ -9362,11 +9363,7 @@ export class Hud {
     const currentZone = zoneAt(p.pos.x, p.pos.z);
     if (mediumHud) {
       // zone transitions: banner + welcome hint when crossing into a new band.
-      if (!inDungeon && currentZone.id !== this.lastZoneId) {
-        // commit the moment zoneAt flips: the old 1D z deadband never fired
-        // on an east-west crossing (the grid's column borders share the z
-        // band), so the banner and map lagged the border by a whole realm.
-        // Re-crossing costs only a banner re-emit; the map bg is cached.
+      if (!inDungeon && enteredNewZoneRegion(currentZone.id, this.lastZoneId)) {
         if (this.lastZoneId !== '') {
           const currentZoneName = zoneDisplayName(currentZone.id);
           this.showBanner(currentZoneName);

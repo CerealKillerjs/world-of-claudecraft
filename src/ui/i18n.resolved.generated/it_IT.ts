@@ -11859,6 +11859,7 @@ export const it_IT: EnTranslations = {
       "deathRecapFalling": "Sei morto. Sei caduto nel vuoto.",
       "deathRecapDrowned": "Sei morto. Sei annegato.",
       "deathRecapCauterized": "Sei morto. L'ustione della Cauterizzazione ti ha sopraffatto.",
+      "deathRecapAbyssToll": "You have died. The Weight of the climb crushed you.",
       "respawn": "Ti senti di nuovo riposato e integro.",
       "respawnKeeperToll": "Il Custode Pallido ti ha fatto rivivere, ma ne esci indebolito: il Mal di resurrezione drena i tuoi attributi finché non svanisce.",
       "ignoringChat": "Chat di {name} ignorata.",
@@ -12002,6 +12003,16 @@ export const it_IT: EnTranslations = {
       "slayProgress": "Lupi della foresta uccisi: {current} / {needed}",
       "returnTitle": "Reclama la ricompensa",
       "returnBody": "Il tuo incarico è compiuto. Torna dal maresciallo Redbrook e premi {interactKey} per consegnarlo."
+    },
+    "abyssToll": {
+      "weight": "The Weight",
+      "dizziness": "Dizziness",
+      "nausea": "Nausea",
+      "trembling": "Trembling",
+      "visions": "Visions",
+      "rending": "Rending",
+      "hollowing": "Hollowing",
+      "deformation": "Deformation"
     },
     "markers": {
       "names": {

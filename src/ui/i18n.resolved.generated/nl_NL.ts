@@ -11859,6 +11859,7 @@ export const nl_NL: EnTranslations = {
       "deathRecapFalling": "Je bent gestorven. Je bent te pletter gevallen.",
       "deathRecapDrowned": "Je bent gestorven. Je bent verdronken.",
       "deathRecapCauterized": "Je bent gestorven. De verbranding van Cauteriseren overweldigde je.",
+      "deathRecapAbyssToll": "You have died. The Weight of the climb crushed you.",
       "respawn": "Je voelt je uitgerust en weer heel.",
       "respawnKeeperToll": "De Bleke Bewaarder heeft je doen herleven, maar je bent er zwakker door geworden: de Tol van de Bewaarder put je eigenschappen uit totdat het vervalt.",
       "ignoringChat": "Chat van {name} wordt genegeerd.",
@@ -12002,6 +12003,16 @@ export const nl_NL: EnTranslations = {
       "slayProgress": "Woudwolven gedood: {current} / {needed}",
       "returnTitle": "Eis je beloning op",
       "returnBody": "Je taak is volbracht. Keer terug naar Maarschalk Redbrook en druk op {interactKey} om deze in te leveren."
+    },
+    "abyssToll": {
+      "weight": "The Weight",
+      "dizziness": "Dizziness",
+      "nausea": "Nausea",
+      "trembling": "Trembling",
+      "visions": "Visions",
+      "rending": "Rending",
+      "hollowing": "Hollowing",
+      "deformation": "Deformation"
     },
     "markers": {
       "names": {

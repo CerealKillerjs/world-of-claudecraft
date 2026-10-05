@@ -4175,6 +4175,7 @@ export const ru_RU: Partial<Record<TranslationKey, string>> = {
   'hud.system.deathRecapFalling': 'Вы погибли. Вы разбились насмерть.',
   'hud.system.deathRecapDrowned': 'Вы погибли. Вы утонули.',
   'hud.system.deathRecapCauterized': 'Вы погибли. Ожог Прижигания одолел вас.',
+  'hud.system.deathRecapAbyssToll': 'Вы погибли. Тяжесть подъёма раздавила вас.',
   'hud.system.respawn': 'Вы снова чувствуете себя отдохнувшим и целым.',
   'hud.system.respawnKeeperToll':
     'Целитель душ воскресил вас, но вы ослабли: болезнь воскрешения снижает все ваши характеристики, пока не пройдёт.',
@@ -8143,6 +8144,14 @@ export const ru_RU: Partial<Record<TranslationKey, string>> = {
   'hud.tutorial.returnTitle': 'Получите награду',
   'hud.tutorial.returnBody':
     'Задание выполнено. Вернитесь к маршалу Редбруку и нажмите {interactKey}, чтобы сдать его.',
+  'hud.abyssToll.weight': 'Тяжесть',
+  'hud.abyssToll.dizziness': 'Головокружение',
+  'hud.abyssToll.nausea': 'Тошнота',
+  'hud.abyssToll.trembling': 'Дрожь',
+  'hud.abyssToll.visions': 'Видения',
+  'hud.abyssToll.rending': 'Разрывы',
+  'hud.abyssToll.hollowing': 'Опустошение',
+  'hud.abyssToll.deformation': 'Искажение',
   'entities.mobs.nythraxis_heroic_warrior_add.name': 'Олдрен, бессмертный страж',
   'entities.mobs.nythraxis_heroic_priest_add.name': 'Малрик, бессмертный иерофант',
   'entities.mobs.nythraxis_heroic_rogue_add.name': 'Восс, бессмертный клинок',

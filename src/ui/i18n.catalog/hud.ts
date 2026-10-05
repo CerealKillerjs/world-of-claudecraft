@@ -486,6 +486,9 @@ const hudStringsEn = {
       // 'Cauterized') is another unattributed cause: it must not read as
       // "Slain by Cauterized", which sounds like an enemy landed the kill.
       deathRecapCauterized: "You have died. Cauterize's burn overwhelmed you.",
+      // The abyss ascent toll's outright kill (src/sim/abyss_toll.ts, cause 'The
+      // Weight'): unattributed like a fall, so it gets its own sentence.
+      deathRecapAbyssToll: 'You have died. The Weight of the climb crushed you.',
       respawn: 'You feel rested and whole again.',
       // The Pale Keeper's revive: alive again, but under the Keeper's Toll (the
       // respawn event carries sickness: 'resurrection'). WORDY by M16, so the five
@@ -647,6 +650,19 @@ const hudStringsEn = {
       returnTitle: 'Claim Your Reward',
       returnBody:
         'Your task is done. Return to Marshal Redbrook and press {interactKey} to turn it in.',
+    },
+    // The abyss ascent toll (src/sim/abyss_toll_core.ts): the curse's own name
+    // and the aura each layer's charge applies, localized through
+    // src/ui/abyss_toll_i18n.ts.
+    abyssToll: {
+      weight: 'The Weight',
+      dizziness: 'Dizziness',
+      nausea: 'Nausea',
+      trembling: 'Trembling',
+      visions: 'Visions',
+      rending: 'Rending',
+      hollowing: 'Hollowing',
+      deformation: 'Deformation',
     },
   },
 };

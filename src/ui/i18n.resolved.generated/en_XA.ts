@@ -11859,6 +11859,7 @@ export const en_XA: EnTranslations = {
       "deathRecapFalling": "[Ýóú ĥáʋé ðíéð. Ýóú ƒéļļ ţó ýóúŕ ðéáţĥ.]",
       "deathRecapDrowned": "[Ýóú ĥáʋé ðíéð. Ýóú ðŕóŵñéð.]",
       "deathRecapCauterized": "[Ýóú ĥáʋé ðíéð. Çáúţéŕížé'š ƀúŕñ óʋéŕŵĥéļɱéð ýóú.]",
+      "deathRecapAbyssToll": "[Ýóú ĥáʋé ðíéð. Ţĥé Ŵéíĝĥţ óƒ ţĥé çļíɱƀ çŕúšĥéð ýóú.]",
       "respawn": "[Ýóú ƒééļ ŕéšţéð áñð ŵĥóļé áĝáíñ.]",
       "respawnKeeperToll": "[Ţĥé Þáļé Ķééþéŕ ĥáš ŕéʋíʋéð ýóú, ƀúţ ýóú áŕé ŵéáķéŕ ƒóŕ íţ: ţĥé Ķééþéŕ'š Ţóļļ ðŕáíñš ýóúŕ áţţŕíƀúţéš úñţíļ íţ ƒáðéš.]",
       "ignoringChat": "[Íĝñóŕíñĝ çĥáţ ƒŕóɱ {name}.]",
@@ -12002,6 +12003,16 @@ export const en_XA: EnTranslations = {
       "slayProgress": "[Ƒóŕéšţ Ŵóļʋéš šļáíñ: {current} / {needed}]",
       "returnTitle": "[Çļáíɱ Ýóúŕ Ŕéŵáŕð]",
       "returnBody": "[Ýóúŕ ţášķ íš ðóñé. Ŕéţúŕñ ţó Ɱáŕšĥáļ Ŕéðƀŕóóķ áñð þŕéšš {interactKey} ţó ţúŕñ íţ íñ.]"
+    },
+    "abyssToll": {
+      "weight": "[Ţĥé Ŵéíĝĥţ]",
+      "dizziness": "[Ðížžíñéšš]",
+      "nausea": "[Ñáúšéá]",
+      "trembling": "[Ţŕéɱƀļíñĝ]",
+      "visions": "[Ʋíšíóñš]",
+      "rending": "[Ŕéñðíñĝ]",
+      "hollowing": "[Ĥóļļóŵíñĝ]",
+      "deformation": "[Ðéƒóŕɱáţíóñ]"
     },
     "markers": {
       "names": {

@@ -11859,6 +11859,7 @@ export const tr_TR: EnTranslations = {
       "deathRecapFalling": "Öldün. Düşerek can verdin.",
       "deathRecapDrowned": "Öldün. Boğuldun.",
       "deathRecapCauterized": "Öldün. Dağlama'nın yanığı seni alt etti.",
+      "deathRecapAbyssToll": "You have died. The Weight of the climb crushed you.",
       "respawn": "Kendini dinlenmiş ve yeniden sapasağlam hissediyorsun.",
       "respawnKeeperToll": "Soluk Bekçi seni diriltmiş, ancak bunun bedeli vardır: Bekçi Bedeli, atflarını azaltana kadar seni zayıflatır.",
       "ignoringChat": "{name} oyuncusunun sohbeti görmezden geliniyor.",
@@ -12002,6 +12003,16 @@ export const tr_TR: EnTranslations = {
       "slayProgress": "Öldürülen Orman Kurtları: {current} / {needed}",
       "returnTitle": "Ödülünü Al",
       "returnBody": "Görevin tamamlandı. Mareşal Redbrook'a dön ve teslim etmek için {interactKey} tuşuna bas."
+    },
+    "abyssToll": {
+      "weight": "The Weight",
+      "dizziness": "Dizziness",
+      "nausea": "Nausea",
+      "trembling": "Trembling",
+      "visions": "Visions",
+      "rending": "Rending",
+      "hollowing": "Hollowing",
+      "deformation": "Deformation"
     },
     "markers": {
       "names": {

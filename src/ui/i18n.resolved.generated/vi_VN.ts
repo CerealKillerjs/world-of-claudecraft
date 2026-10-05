@@ -11859,6 +11859,7 @@ export const vi_VN: EnTranslations = {
       "deathRecapFalling": "Bạn đã chết. Bạn đã ngã tử vong.",
       "deathRecapDrowned": "Bạn đã chết. Bạn đã chết đuối.",
       "deathRecapCauterized": "Bạn đã chết. Vết bỏng của Thiêu Đốt đã áp đảo bạn.",
+      "deathRecapAbyssToll": "You have died. The Weight of the climb crushed you.",
       "respawn": "Bạn cảm thấy đã được nghỉ ngơi và hồi phục hoàn toàn.",
       "respawnKeeperToll": "Người Gìn Giữ Nhợt Nhạt đã hồi sinh bạn, nhưng bạn yếu đi vì nó: Phí Người Gìn Giữ làm suy giảm chỉ số của bạn cho đến khi nó biến mất.",
       "ignoringChat": "Đang bỏ qua tin nhắn từ {name}.",
@@ -12002,6 +12003,16 @@ export const vi_VN: EnTranslations = {
       "slayProgress": "Sói Rừng đã hạ: {current} / {needed}",
       "returnTitle": "Nhận Phần Thưởng",
       "returnBody": "Nhiệm vụ của bạn đã xong. Quay lại gặp Cảnh Sát Trưởng Redbrook và nhấn {interactKey} để nộp nhiệm vụ."
+    },
+    "abyssToll": {
+      "weight": "The Weight",
+      "dizziness": "Dizziness",
+      "nausea": "Nausea",
+      "trembling": "Trembling",
+      "visions": "Visions",
+      "rending": "Rending",
+      "hollowing": "Hollowing",
+      "deformation": "Deformation"
     },
     "markers": {
       "names": {

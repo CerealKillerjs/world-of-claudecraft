@@ -4,6 +4,7 @@ import { cloneMaterialData, cloneMaterialPayload } from './material_payload_iden
 import type { MaterialComposition } from './material_sources';
 // Core shared types for the simulation. The sim layer has zero DOM/rendering deps.
 
+import type { AbyssDef } from './abyss_depth';
 import type { ChatSenderFlair, StreamerLinks } from './account_flair';
 import type { MountKey } from './content/mounts';
 import type { CraftDef, GatheringProfessionId, ToolEffectId } from './content/professions';
@@ -8968,6 +8969,10 @@ export interface WorldContent {
   // Water surface height for this map; absent = the built-in WATER_LEVEL (-4.5).
   // Read through waterLevel() in src/sim/world.ts, never directly.
   waterLevel?: number;
+  // The vertical abyss (rim height + footprints) the ascent toll and other
+  // below-the-rim rules read. Absent for the built-in world, so none of them
+  // ever fire there. Read through src/sim/abyss_depth.ts, never directly.
+  abyss?: AbyssDef;
 }
 
 /** The resolved storage price tables every sim price read consumes: bank slot

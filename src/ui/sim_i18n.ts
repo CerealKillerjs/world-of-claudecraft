@@ -21,6 +21,7 @@ import {
 } from '../sim/factions';
 import { DELVE_MODULE_NAMES } from '../sim/sim';
 import type { EntityKind, PlayerClass } from '../sim/types';
+import { localizeAbyssTollName } from './abyss_toll_i18n';
 import { durationText } from './duration_text';
 import { tEntity } from './entity_i18n';
 import {
@@ -17958,7 +17959,7 @@ export function localizeSimAuraName(name: string): string | null {
   const abilityId = WARLOCK_ABILITY_AURA_IDS[name];
   if (abilityId) return tEntity({ kind: 'ability', id: abilityId, field: 'name' });
   if (WARLOCK_TALENT_AURA_NAMES.has(name)) return localizeTalentTitle(name);
-  return null;
+  return localizeAbyssTollName(name);
 }
 
 // A boss/mob "mechanic" name spliced into "{mob} unleashes {mechanic}!". Reuses the shared

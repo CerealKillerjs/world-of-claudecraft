@@ -1,6 +1,6 @@
 # La Sima: diseño del mundo inspirado en un abismo vertical
 
-Estado: propuesta, pendiente de decisiones (ver "Decisiones abiertas" al final).
+Estado: propuesta. Escala 1:1 y ciudad de 3 km decididas; el resto en "Decisiones" al final.
 Alcance: este documento define el mundo jugable, su escala y cómo encaja en el motor
 de World of ClaudeCraft. No cambia código. Todos los nombres propios de este documento
 son **nombres de trabajo** y pasan el control de originalidad antes de usarse en el juego.
@@ -90,8 +90,8 @@ Precisión numérica: posiciones en torno a 22.000 yd tienen un error de float32
 - **Pozo**: círculo de 547 yd de radio en el centro de la isla. 1:1 con la obra.
 - **Anillo del borde** (distrito centro): de 547 a 750 yd del centro. Andamios, poleas,
   ascensores de carga, la sede del gremio de exploradores y el mercado de hallazgos.
-- **Cuatro distritos** (N, S, E, O): de 750 a 1.640 yd del centro (estimación nuestra:
-  ciudad de unos 3 km de diámetro). Barrios, escuela-orfanato de aprendices, talleres,
+- **Cuatro distritos** (N, S, E, O): de 750 a 1.640 yd del centro (ciudad de 3 km de
+  diámetro, decidido el 2026-10-05; la obra no da la cifra). Barrios, escuela-orfanato de aprendices, talleres,
   puerto al sur.
 - **Isla**: radio de unos 2.700 yd (estimación), con costa, campos y faro. Puerto
   conectado con las rutas de barco que el motor ya tiene (`transport_ship.ts`).
@@ -117,14 +117,18 @@ El campo de alturas no puede tener una capa ancha **debajo** de la ciudad. Por e
 - La profundidad que el jugador ve (el "altímetro") y la que usa el castigo es la
   **profundidad real en metros** de la tabla de la sección 2.
 
-**Compresión del recorrido.** Bajar 21.872 yd a pie con pendiente del 25 % son unas
-3,5 horas de caminata pura. Dos opciones (decisión abierta 1):
+**Escala vertical: 1:1 en todas las capas (decidido el 2026-10-05).** No hay
+compresión: la Y del motor es la profundidad real convertida a yardas, y el altímetro
+y el castigo leen esa misma cifra. Consecuencias de diseño:
 
-- A. **1:1 en todas las capas**: máxima fidelidad; el viaje al fondo es una expedición
-  de varias sesiones con campamentos intermedios.
-- B. **1:1 en ciudad y capa 1; compresión vertical en capas profundas** (por ejemplo
-  1:4 desde la capa 3), manteniendo el altímetro y el castigo en metros reales.
-  Recomendada: conserva las medidas que el jugador ve y ajusta solo el tiempo de viaje.
+- Bajar 21.872 yd a pie con pendiente del 25 % son unas 3,5 horas de caminata pura.
+  El viaje al fondo es una **expedición de varias sesiones**, no una ruta de un rato.
+- Cada frontera de capa tiene un **campamento** (cementerio de resurrección, buzón,
+  vendedor y punto de guardado), para que una sesión pueda terminar a medio descenso.
+- La gran pared de la capa 3 mide 4.812 yd de alto a escala real: se baja por
+  repisas, cuevas y sogas, y necesita el modo de escalada de la fase 6.
+- Subir es caro a propósito (el Peso). La forma de volver a la superficie desde capas
+  profundas es la decisión abierta 4.
 
 ### 4.3 El castigo al subir (nombre de trabajo: "el Peso")
 
@@ -179,7 +183,7 @@ las mazmorras con requisitos.
 | Profesiones y recolección | Recolección de hallazgos en las capas; la tasación en el gremio |
 | Mazmorras e instancias | Ruinas y nidos dentro de cada capa |
 | Barcos y puertos | Llegada a la isla |
-| Monturas | Solo en la isla y la ciudad; dentro del pozo, no (decisión abierta 4) |
+| Monturas | Solo en la isla y la ciudad; dentro del pozo, no (decisión abierta 2) |
 | JcJ, arenas, carreras, planeador | Se apagan al principio o quedan como minijuegos de la ciudad |
 | Las zonas actuales | No se cargan en este mundo: el paquete `WorldContent` nuevo las reemplaza |
 
@@ -224,14 +228,21 @@ Ninguno se usa en contenido hasta pasar la verificación de la sección 1.
 - **Copyright**: el riesgo crece cuanto más se copie el conjunto completo (nombres,
   efectos, criaturas). Las cifras y la estructura son lo que menos riesgo tiene.
 
-## 9. Decisiones abiertas
+## 9. Decisiones
 
-1. Escala vertical: A (1:1 en todo) o B (1:1 hasta capa 1, comprimido después).
-   Recomendada: B.
-2. Límites de capa: copiar exactamente las cifras de la sección 2 o redondearlas a
+Tomadas (2026-10-05):
+
+- Escala vertical 1:1 en todas las capas, sin compresión.
+- Ciudad de 3 km de diámetro alrededor de la abertura de 1 km.
+
+Abiertas:
+
+1. Límites de capa: copiar exactamente las cifras de la sección 2 o redondearlas a
    cifras propias cercanas. Recomendada: copiarlas (son datos), con nombres propios.
-3. Tamaño de la ciudad: 3 km de diámetro (propuesta) u otra cifra si tienes una
-   referencia mejor de la obra.
-4. Monturas dentro del pozo: no (recomendada) o solo en capa 1.
-5. Idioma de los textos del juego: inglés en el catálogo (regla del repo) con español
+2. Monturas dentro del pozo: no (recomendada) o solo en capa 1.
+3. Idioma de los textos del juego: inglés en el catálogo (regla del repo) con español
    como primera traducción.
+4. Regreso a la superficie desde capas profundas: subir a pie pagando el Peso (fiel a la
+   obra), o un objeto raro de regreso que se gana en cada campamento. Recomendada: a pie
+   hasta la capa 2 y el objeto raro desde la capa 3, para que una expedición fallida no
+   cueste horas de vuelta.

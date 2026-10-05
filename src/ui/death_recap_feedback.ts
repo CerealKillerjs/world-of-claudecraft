@@ -36,6 +36,9 @@ const ENVIRONMENTAL_KEYS: Record<string, TranslationKey> = {
   Falling: 'hud.system.deathRecapFalling',
   Fatigue: 'hud.system.deathRecapDrowned',
   Cauterized: 'hud.system.deathRecapCauterized',
+  // The abyss ascent toll's outright kill (src/sim/abyss_toll.ts
+  // ABYSS_TOLL_CAUSE): handleDeath with no killer, so only the cause survives.
+  'The Weight': 'hud.system.deathRecapAbyssToll',
 };
 
 /**

@@ -11859,6 +11859,7 @@ export const zh_TW: EnTranslations = {
       "deathRecapFalling": "你已經死亡。你摔死了。",
       "deathRecapDrowned": "你已經死亡。你溺死了。",
       "deathRecapCauterized": "你已經死亡。灼燒術的烈焰吞噬了你。",
+      "deathRecapAbyssToll": "你已經死亡。攀升之重壓垮了你。",
       "respawn": "你再次感到精力恢復、身體完整。",
       "respawnKeeperToll": "靈魂醫者復活了你，但你因此變得虛弱：在復活後遺症消退之前，你的所有屬性都會被削弱。",
       "ignoringChat": "已封鎖來自 {name} 的聊天。",
@@ -12002,6 +12003,16 @@ export const zh_TW: EnTranslations = {
       "slayProgress": "已擊殺森林狼：{current} / {needed}",
       "returnTitle": "領取獎勵",
       "returnBody": "任務已完成。返回雷德布魯克元帥處並按 {interactKey} 繳交任務。"
+    },
+    "abyssToll": {
+      "weight": "重壓",
+      "dizziness": "暈眩",
+      "nausea": "噁心",
+      "trembling": "顫抖",
+      "visions": "幻視",
+      "rending": "撕裂",
+      "hollowing": "空洞",
+      "deformation": "畸變"
     },
     "markers": {
       "names": {

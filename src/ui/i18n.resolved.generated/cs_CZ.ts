@@ -11859,6 +11859,7 @@ export const cs_CZ: EnTranslations = {
       "deathRecapFalling": "Tvá postava zemřela. Spadla k smrti.",
       "deathRecapDrowned": "Tvá postava zemřela. Utopila se.",
       "deathRecapCauterized": "Tvá postava zemřela. Přemohl tě žár Vypálení.",
+      "deathRecapAbyssToll": "You have died. The Weight of the climb crushed you.",
       "respawn": "Cítíš se odpočatě a znovu celý(á).",
       "respawnKeeperToll": "Bledý strážce tě oživil, ale je to na tobě znát: Strážcovo mýto ti oslabuje vlastnosti, dokud nevyprchá.",
       "ignoringChat": "Ignoruješ chat od {name}.",
@@ -12002,6 +12003,16 @@ export const cs_CZ: EnTranslations = {
       "slayProgress": "Lesní vlci zabiti: {current} / {needed}",
       "returnTitle": "Vyzvedni si odměnu",
       "returnBody": "Tvůj úkol je hotový. Vrať se k maršálu Redbrookovi a stiskni {interactKey} pro odevzdání."
+    },
+    "abyssToll": {
+      "weight": "The Weight",
+      "dizziness": "Dizziness",
+      "nausea": "Nausea",
+      "trembling": "Trembling",
+      "visions": "Visions",
+      "rending": "Rending",
+      "hollowing": "Hollowing",
+      "deformation": "Deformation"
     },
     "markers": {
       "names": {

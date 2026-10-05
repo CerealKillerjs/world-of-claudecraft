@@ -11859,6 +11859,7 @@ export const pt_BR: EnTranslations = {
       "deathRecapFalling": "Você morreu. Você caiu e morreu.",
       "deathRecapDrowned": "Você morreu. Você se afogou.",
       "deathRecapCauterized": "Você morreu. A queimadura de Cauterizar dominou você.",
+      "deathRecapAbyssToll": "You have died. The Weight of the climb crushed you.",
       "respawn": "Você se sente descansado e inteiro novamente.",
       "respawnKeeperToll": "O Guardião Pálido reviveu você, mas isso tem um preço: o Tributo do Guardião drena seus atributos até que se dissipe.",
       "ignoringChat": "Ignorando chat de {name}.",
@@ -12002,6 +12003,16 @@ export const pt_BR: EnTranslations = {
       "slayProgress": "Lobos da floresta abatidos: {current} / {needed}",
       "returnTitle": "Reivindique sua recompensa",
       "returnBody": "Sua tarefa está concluída. Volte ao marechal Redbrook e pressione {interactKey} para entregá-la."
+    },
+    "abyssToll": {
+      "weight": "The Weight",
+      "dizziness": "Dizziness",
+      "nausea": "Nausea",
+      "trembling": "Trembling",
+      "visions": "Visions",
+      "rending": "Rending",
+      "hollowing": "Hollowing",
+      "deformation": "Deformation"
     },
     "markers": {
       "names": {

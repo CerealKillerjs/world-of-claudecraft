@@ -11859,6 +11859,7 @@ export const ko_KR: EnTranslations = {
       "deathRecapFalling": "사망했습니다. 추락사했습니다.",
       "deathRecapDrowned": "사망했습니다. 익사했습니다.",
       "deathRecapCauterized": "사망했습니다. 소작의 화염이 당신을 집어삼켰습니다.",
+      "deathRecapAbyssToll": "사망했습니다. 상승의 중압에 짓눌렸습니다.",
       "respawn": "다시 온전하고 편안한 상태가 되었습니다.",
       "respawnKeeperToll": "영혼 치유사가 당신을 부활시켰지만 그 대가로 약해졌습니다. 부활 후유증이 사라질 때까지 모든 능력치가 감소합니다.",
       "ignoringChat": "{name}의 채팅을 차단합니다.",
@@ -12002,6 +12003,16 @@ export const ko_KR: EnTranslations = {
       "slayProgress": "처치한 숲늑대: {current} / {needed}",
       "returnTitle": "보상 받기",
       "returnBody": "임무를 마쳤습니다. 레드브룩 원수에게 돌아가 {interactKey} 키를 눌러 완료하세요."
+    },
+    "abyssToll": {
+      "weight": "중압",
+      "dizziness": "현기증",
+      "nausea": "구역질",
+      "trembling": "떨림",
+      "visions": "환영",
+      "rending": "찢김",
+      "hollowing": "공허",
+      "deformation": "변형"
     },
     "markers": {
       "names": {

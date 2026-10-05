@@ -11859,6 +11859,7 @@ export const fr_CA: EnTranslations = {
       "deathRecapFalling": "Vous êtes mort. Vous avez fait une chute mortelle.",
       "deathRecapDrowned": "Vous êtes mort. Vous vous êtes noyé.",
       "deathRecapCauterized": "Vous êtes mort. La brûlure de Cautérisation vous a submergé.",
+      "deathRecapAbyssToll": "You have died. The Weight of the climb crushed you.",
       "respawn": "Vous vous sentez reposé et entier à nouveau.",
       "respawnKeeperToll": "Le Veilleur pâle vous a ranimé, mais vous en ressortez affaibli : le Glas du Veilleur draine vos attributs jusqu'à ce qu'il se dissipe.",
       "ignoringChat": "Discussion de {name} ignorée.",
@@ -12002,6 +12003,16 @@ export const fr_CA: EnTranslations = {
       "slayProgress": "Loups des bois tués : {current} / {needed}",
       "returnTitle": "Réclame ta récompense",
       "returnBody": "Ta mission est accomplie. Retourne voir le maréchal Redbrook et appuie sur {interactKey} pour la rendre."
+    },
+    "abyssToll": {
+      "weight": "The Weight",
+      "dizziness": "Dizziness",
+      "nausea": "Nausea",
+      "trembling": "Trembling",
+      "visions": "Visions",
+      "rending": "Rending",
+      "hollowing": "Hollowing",
+      "deformation": "Deformation"
     },
     "markers": {
       "names": {

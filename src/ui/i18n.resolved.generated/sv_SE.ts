@@ -11859,6 +11859,7 @@ export const sv_SE: EnTranslations = {
       "deathRecapFalling": "Du har dött. Du föll till din död.",
       "deathRecapDrowned": "Du har dött. Du drunknade.",
       "deathRecapCauterized": "Du har dött. Bränningen övermannade dig.",
+      "deathRecapAbyssToll": "You have died. The Weight of the climb crushed you.",
       "respawn": "Du känner dig utvilad och hel igen.",
       "respawnKeeperToll": "Den bleka väktaren har återupplivat dig, men du är svagare för det: väktarens avgift dränerar dina attribut tills det försvinner.",
       "ignoringChat": "Ignorerar chatt från {name}.",
@@ -12002,6 +12003,16 @@ export const sv_SE: EnTranslations = {
       "slayProgress": "Dödade skogsvargar: {current} / {needed}",
       "returnTitle": "Hämta din belöning",
       "returnBody": "Ditt uppdrag är slutfört. Återvänd till Marshal Redbrook och tryck på {interactKey} för att lämna in det."
+    },
+    "abyssToll": {
+      "weight": "The Weight",
+      "dizziness": "Dizziness",
+      "nausea": "Nausea",
+      "trembling": "Trembling",
+      "visions": "Visions",
+      "rending": "Rending",
+      "hollowing": "Hollowing",
+      "deformation": "Deformation"
     },
     "markers": {
       "names": {

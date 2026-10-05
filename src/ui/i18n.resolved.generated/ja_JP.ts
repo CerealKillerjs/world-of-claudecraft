@@ -11859,6 +11859,7 @@ export const ja_JP: EnTranslations = {
       "deathRecapFalling": "死亡しました。転落死しました。",
       "deathRecapDrowned": "死亡しました。溺死しました。",
       "deathRecapCauterized": "死亡しました。焼灼の炎に飲み込まれました。",
+      "deathRecapAbyssToll": "あなたは死亡した。登攀の重圧に押し潰された。",
       "respawn": "再び休まり、完全な状態になりました。",
       "respawnKeeperToll": "霊魂の癒し手があなたを復活させたが、その代償として弱っている。復活の後遺症が消えるまで、すべての能力値が下がる。",
       "ignoringChat": "{name}のチャットを無視します。",
@@ -12002,6 +12003,16 @@ export const ja_JP: EnTranslations = {
       "slayProgress": "倒した森の狼：{current} / {needed}",
       "returnTitle": "報酬を受け取る",
       "returnBody": "依頼は完了しました。レッドブルック元帥のもとへ戻り、{interactKey} を押して納品しましょう。"
+    },
+    "abyssToll": {
+      "weight": "重圧",
+      "dizziness": "めまい",
+      "nausea": "吐き気",
+      "trembling": "震え",
+      "visions": "幻視",
+      "rending": "裂傷",
+      "hollowing": "空虚",
+      "deformation": "変形"
     },
     "markers": {
       "names": {

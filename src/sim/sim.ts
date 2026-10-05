@@ -715,7 +715,6 @@ export type { MailSave } from './mail/post_office';
 export type { MarketSave } from './market';
 
 import { updateBreath } from './breath';
-import { updateSwimFatigue } from './fatigue';
 import { personalGliderLeaderboard as gliderRecordsPage } from './glider_personal_records';
 import { spawnStaticWorldObjects } from './ground_object_spawns';
 import { chainPullInstanceOnBossAggro } from './instances/boss_chain_pull';
@@ -740,6 +739,7 @@ import {
   updateInstances as updateInstancesImpl,
 } from './instances/dungeons';
 import { buyHeroicVendorItem as buyHeroicVendorItemImpl } from './instances/heroic_vendor';
+import { type AbyssTollPlayerState, updateEnvironmentClocks } from './player_environment';
 import { updatePortalTriggers } from './portals';
 import { interactNpcForQuests } from './quest_npc_interaction';
 import * as questCommands from './quests/quest_commands';
@@ -1303,7 +1303,7 @@ export type JoinableChannel = (typeof JOINABLE_CHANNELS)[number];
 
 // Per-player progression and bags. The entity holds combat state; this holds
 // everything that belongs to the character sheet.
-export interface PlayerMeta extends worldQuestState.WorldQuestPlayerState {
+export interface PlayerMeta extends worldQuestState.WorldQuestPlayerState, AbyssTollPlayerState {
   entityId: number;
   // Stable database character id when running on the server. Offline/sim-only
   // callers fall back to entityId for systems that need a rename-proof owner key.
@@ -5982,7 +5982,7 @@ export class Sim {
         this.updateDoorTriggers(p);
         this.updateRiftTriggers(p);
         updatePortalTriggers(this.ctx, p);
-        updateSwimFatigue(this.ctx, p);
+        updateEnvironmentClocks(this.ctx, p, meta);
         lap?.('p.doors');
         this.updateCasting(p, meta);
         lap?.('p.casting');

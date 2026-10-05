@@ -11859,6 +11859,7 @@ export const da_DK: EnTranslations = {
       "deathRecapFalling": "Du er død. Du faldt i døden.",
       "deathRecapDrowned": "Du er død. Du druknede.",
       "deathRecapCauterized": "Du er død. Kauteriseringens forbrænding overvældede dig.",
+      "deathRecapAbyssToll": "You have died. The Weight of the climb crushed you.",
       "respawn": "Du føler dig udhvilet og hel igen.",
       "respawnKeeperToll": "Den blege vogter har genoplivet dig, men du er svagere for det: vogterens livstold er reduceret.",
       "ignoringChat": "Ignorerer chat fra {name}.",
@@ -12002,6 +12003,16 @@ export const da_DK: EnTranslations = {
       "slayProgress": "Skovulve dræbt: {current} / {needed}",
       "returnTitle": "Indkræv din belønning",
       "returnBody": "Din opgave er fuldført. Vend tilbage til Marskal Redbrook og tryk på {interactKey} for at aflevere den."
+    },
+    "abyssToll": {
+      "weight": "The Weight",
+      "dizziness": "Dizziness",
+      "nausea": "Nausea",
+      "trembling": "Trembling",
+      "visions": "Visions",
+      "rending": "Rending",
+      "hollowing": "Hollowing",
+      "deformation": "Deformation"
     },
     "markers": {
       "names": {

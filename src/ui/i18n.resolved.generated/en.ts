@@ -11859,6 +11859,7 @@ export const en: EnTranslations = {
       "deathRecapFalling": "You have died. You fell to your death.",
       "deathRecapDrowned": "You have died. You drowned.",
       "deathRecapCauterized": "You have died. Cauterize's burn overwhelmed you.",
+      "deathRecapAbyssToll": "You have died. The Weight of the climb crushed you.",
       "respawn": "You feel rested and whole again.",
       "respawnKeeperToll": "The Pale Keeper has revived you, but you are weaker for it: the Keeper's Toll drains your attributes until it fades.",
       "ignoringChat": "Ignoring chat from {name}.",
@@ -12002,6 +12003,16 @@ export const en: EnTranslations = {
       "slayProgress": "Forest Wolves slain: {current} / {needed}",
       "returnTitle": "Claim Your Reward",
       "returnBody": "Your task is done. Return to Marshal Redbrook and press {interactKey} to turn it in."
+    },
+    "abyssToll": {
+      "weight": "The Weight",
+      "dizziness": "Dizziness",
+      "nausea": "Nausea",
+      "trembling": "Trembling",
+      "visions": "Visions",
+      "rending": "Rending",
+      "hollowing": "Hollowing",
+      "deformation": "Deformation"
     },
     "markers": {
       "names": {

@@ -11859,6 +11859,7 @@ export const id_ID: EnTranslations = {
       "deathRecapFalling": "Kamu telah tewas. Kamu jatuh hingga tewas.",
       "deathRecapDrowned": "Kamu telah tewas. Kamu tenggelam.",
       "deathRecapCauterized": "Kamu telah tewas. Bakaran Kauterisasi mengalahkanmu.",
+      "deathRecapAbyssToll": "You have died. The Weight of the climb crushed you.",
       "respawn": "Kamu merasa segar dan pulih kembali.",
       "respawnKeeperToll": "Penjaga Pucat telah menghidupkan kembali Anda, namun Anda melemah karenanya: Pajak Penjaga menguras atribut Anda sampai pudar.",
       "ignoringChat": "Mengabaikan obrolan dari {name}.",
@@ -12002,6 +12003,16 @@ export const id_ID: EnTranslations = {
       "slayProgress": "Serigala Hutan dibasmi: {current} / {needed}",
       "returnTitle": "Klaim Hadiahmu",
       "returnBody": "Tugasmu selesai. Kembalilah ke Marshal Redbrook dan tekan {interactKey} untuk menyerahkannya."
+    },
+    "abyssToll": {
+      "weight": "The Weight",
+      "dizziness": "Dizziness",
+      "nausea": "Nausea",
+      "trembling": "Trembling",
+      "visions": "Visions",
+      "rending": "Rending",
+      "hollowing": "Hollowing",
+      "deformation": "Deformation"
     },
     "markers": {
       "names": {

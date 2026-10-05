@@ -4127,6 +4127,7 @@ export const ja_JP: Partial<Record<TranslationKey, string>> = {
   'hud.system.deathRecapFalling': '死亡しました。転落死しました。',
   'hud.system.deathRecapDrowned': '死亡しました。溺死しました。',
   'hud.system.deathRecapCauterized': '死亡しました。焼灼の炎に飲み込まれました。',
+  'hud.system.deathRecapAbyssToll': 'あなたは死亡した。登攀の重圧に押し潰された。',
   'hud.system.respawn': '再び休まり、完全な状態になりました。',
   'hud.system.respawnKeeperToll':
     '霊魂の癒し手があなたを復活させたが、その代償として弱っている。復活の後遺症が消えるまで、すべての能力値が下がる。',
@@ -8010,6 +8011,14 @@ export const ja_JP: Partial<Record<TranslationKey, string>> = {
   'hud.tutorial.returnTitle': '報酬を受け取る',
   'hud.tutorial.returnBody':
     '依頼は完了しました。レッドブルック元帥のもとへ戻り、{interactKey} を押して納品しましょう。',
+  'hud.abyssToll.weight': '重圧',
+  'hud.abyssToll.dizziness': 'めまい',
+  'hud.abyssToll.nausea': '吐き気',
+  'hud.abyssToll.trembling': '震え',
+  'hud.abyssToll.visions': '幻視',
+  'hud.abyssToll.rending': '裂傷',
+  'hud.abyssToll.hollowing': '空虚',
+  'hud.abyssToll.deformation': '変形',
   'itemUi.quality.legendary': '伝説',
   'entities.items.deathless_heartwood.name': '不死王冠の心材',
   'entities.items.kingsbane_last_oath.name': 'スロウンベイン、ソーンピーク最後の誓い',

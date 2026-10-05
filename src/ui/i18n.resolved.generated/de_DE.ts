@@ -11859,6 +11859,7 @@ export const de_DE: EnTranslations = {
       "deathRecapFalling": "Ihr seid gestorben. Ihr seid in den Tod gestürzt.",
       "deathRecapDrowned": "Ihr seid gestorben. Ihr seid ertrunken.",
       "deathRecapCauterized": "Ihr seid gestorben. Die Verbrennung von Kauterisieren hat Euch überwältigt.",
+      "deathRecapAbyssToll": "You have died. The Weight of the climb crushed you.",
       "respawn": "Ihr fühlt Euch wieder ausgeruht und unversehrt.",
       "respawnKeeperToll": "Der Bleiche Hüter hat dich wiederbelebt, doch das schwächt dich: Der Zoll des Hüters zehrt an deinen Attributen, bis er nachlässt.",
       "ignoringChat": "Chat von {name} wird ignoriert.",
@@ -12002,6 +12003,16 @@ export const de_DE: EnTranslations = {
       "slayProgress": "Erlegte Waldwölfe: {current} / {needed}",
       "returnTitle": "Hol dir deine Belohnung",
       "returnBody": "Deine Aufgabe ist erledigt. Kehre zu Marschall Redbrook zurück und drücke {interactKey}, um sie abzugeben."
+    },
+    "abyssToll": {
+      "weight": "The Weight",
+      "dizziness": "Dizziness",
+      "nausea": "Nausea",
+      "trembling": "Trembling",
+      "visions": "Visions",
+      "rending": "Rending",
+      "hollowing": "Hollowing",
+      "deformation": "Deformation"
     },
     "markers": {
       "names": {

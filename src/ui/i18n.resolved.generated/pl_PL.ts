@@ -11859,6 +11859,7 @@ export const pl_PL: EnTranslations = {
       "deathRecapFalling": "Zginąłeś. Spadłeś na śmierć.",
       "deathRecapDrowned": "Zginąłeś. Utonąłeś.",
       "deathRecapCauterized": "Zginąłeś. Oparzenie Kauteryzacji cię przytłoczyło.",
+      "deathRecapAbyssToll": "You have died. The Weight of the climb crushed you.",
       "respawn": "Czujesz się wypoczęty i znów cały.",
       "respawnKeeperToll": "Blady Strażnik cię wskrzesił, ale jesteś przez to słabszy: Danina Strażnika osłabia twoimi atrybuty, aż się zniknie.",
       "ignoringChat": "Ignorujesz wiadomości od {name}.",
@@ -12002,6 +12003,16 @@ export const pl_PL: EnTranslations = {
       "slayProgress": "Ubite leśne wilki: {current} / {needed}",
       "returnTitle": "Odbierz nagrodę",
       "returnBody": "Twoje zadanie wykonane. Wróć do marszałka Redbrooka i wciśnij {interactKey}, aby je rozliczyć."
+    },
+    "abyssToll": {
+      "weight": "The Weight",
+      "dizziness": "Dizziness",
+      "nausea": "Nausea",
+      "trembling": "Trembling",
+      "visions": "Visions",
+      "rending": "Rending",
+      "hollowing": "Hollowing",
+      "deformation": "Deformation"
     },
     "markers": {
       "names": {

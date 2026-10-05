@@ -11859,6 +11859,7 @@ export const ru_RU: EnTranslations = {
       "deathRecapFalling": "Вы погибли. Вы разбились насмерть.",
       "deathRecapDrowned": "Вы погибли. Вы утонули.",
       "deathRecapCauterized": "Вы погибли. Ожог Прижигания одолел вас.",
+      "deathRecapAbyssToll": "Вы погибли. Тяжесть подъёма раздавила вас.",
       "respawn": "Вы снова чувствуете себя отдохнувшим и целым.",
       "respawnKeeperToll": "Целитель душ воскресил вас, но вы ослабли: болезнь воскрешения снижает все ваши характеристики, пока не пройдёт.",
       "ignoringChat": "Чат от {name} игнорируется.",
@@ -12002,6 +12003,16 @@ export const ru_RU: EnTranslations = {
       "slayProgress": "Лесных волков убито: {current} / {needed}",
       "returnTitle": "Получите награду",
       "returnBody": "Задание выполнено. Вернитесь к маршалу Редбруку и нажмите {interactKey}, чтобы сдать его."
+    },
+    "abyssToll": {
+      "weight": "Тяжесть",
+      "dizziness": "Головокружение",
+      "nausea": "Тошнота",
+      "trembling": "Дрожь",
+      "visions": "Видения",
+      "rending": "Разрывы",
+      "hollowing": "Опустошение",
+      "deformation": "Искажение"
     },
     "markers": {
       "names": {

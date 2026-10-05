@@ -12,10 +12,11 @@
 //
 // Only a continuous climb counts. A sample that does not follow the previous
 // one (the player was dead, or out of the abyss, on the tick before) or that
-// moved further than RELOCATE_YD in one tick (a teleport: a graveyard revive,
-// a return-to-surface item) re-anchors the mark where the player now stands
-// instead of charging. The deepest layer survives a re-anchor, so the next
-// charge still prices the deepest point since the last payment.
+// moved further than RELOCATE_YD in one tick (a teleport, a graveyard revive)
+// re-anchors the mark where the player now stands instead of charging. The
+// deepest layer survives a re-anchor, so the next charge still prices the
+// deepest point since the last payment. Landing at or above the rim (the
+// return-to-surface item, but today also any teleport out) clears the debt.
 
 import { ABYSS_LAYER_COUNT, abyssLayerAtDepthYd, YD_PER_M } from './abyss_depth';
 import type { AuraKind } from './types';
@@ -28,9 +29,9 @@ export const TOLL_RISE_YD = 10 * YD_PER_M;
  *  far below any graveyard or camp hop. */
 export const RELOCATE_YD = 40;
 
-/** Per-player tracking while inside the abyss. Session-only, never saved: a
- *  relog re-anchors at the current height, which never lets a climb skip a
- *  charge (the mark can only start where the player already stands). */
+/** Per-player tracking while inside the abyss. Session-only, never saved, so
+ *  a relog re-anchors at the current height and drops any partial climb under
+ *  10 m (a known gap: persisting the mark is a follow-up save-shape change). */
 export interface AbyssTollTrack {
   lowY: number;
   deepestLayer: number;
@@ -103,8 +104,9 @@ export function stepAbyssToll(holder: AbyssTollPlayerState, s: AbyssTollSample):
 // shallower layer's, so the price only grows with depth. Durations and
 // magnitudes reuse classic analogues (Mortal Strike's halved healing,
 // Hamstring's halved speed, a Curse of Tongues cast slow) and are the design
-// placeholders the doc asks to calibrate in play. All are undispellable: no
-// cleanse lifts the toll, only its timer (countermeasures are a later phase).
+// placeholders the doc asks to calibrate in play. All are undispellable, so
+// no dispel lifts them; the Nausea slow is still an ordinary slow, so slow
+// immunity and the movement-freeing effects that strip slows also clear it.
 
 /** One aura a layer applies. `pctMaxHpPerTick` turns a dot's value into a
  *  fraction of the wearer's max health, resolved when the toll lands. */

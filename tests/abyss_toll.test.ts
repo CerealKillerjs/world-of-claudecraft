@@ -310,6 +310,22 @@ describe('the live tick path', () => {
     expect(p.auras.some((a) => a.id === ABYSS_TOLL_DIZZINESS_ID)).toBe(true);
   });
 
+  it('stepping past the footprint edge below the rim keeps the debt', () => {
+    const { sim, p } = abyssWorldSim();
+    setActiveWorldContent({
+      ...BUILTIN_WORLD,
+      abyss: { rimY: 1000, regions: [{ kind: 'circle', x: p.pos.x, z: p.pos.z, r: 1 }] },
+    });
+    for (let t = 0; t < 20; t++) sim.tick();
+    expect(sim.players.get(p.id)?.abyssToll).toBeDefined();
+    p.pos.x += 5; // a side ledge outside the footprint, still below the rim
+    sim.tick();
+    expect(sim.players.get(p.id)?.abyssToll).toBeDefined();
+    p.pos.y += 12;
+    sim.tick();
+    expect(p.auras.some((a) => a.id === ABYSS_TOLL_DIZZINESS_ID)).toBe(true);
+  });
+
   it('the same climb in the built-in world charges nothing', () => {
     const sim = new Sim({ seed: 11, playerClass: 'warrior' });
     const p = sim.player;

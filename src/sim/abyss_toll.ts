@@ -25,12 +25,21 @@ export function updateAbyssToll(ctx: SimContext, p: Entity, meta: AbyssTollPlaye
   if (p.kind !== 'player') return;
   const abyss = activeAbyss();
   if (!abyss && !meta.abyssToll) return;
+  // The footprint decides where tracking STARTS. Once tracked, a player who
+  // walks past its edge while still below the rim (a side tunnel, a ledge past
+  // the radius) keeps being tracked, so stepping sideways never clears a debt.
+  // Dead players never reach here (the tick runs the clocks for the living
+  // only); the missed-tick rule in the core re-anchors them on revive.
+  let depthYd = abyssDepthYd(p.pos.x, p.pos.y, p.pos.z, abyss);
+  if (depthYd === null && meta.abyssToll && abyss && abyss.rimY - p.pos.y > 0) {
+    depthYd = abyss.rimY - p.pos.y;
+  }
   const charged = stepAbyssToll(meta, {
     x: p.pos.x,
     y: p.pos.y,
     z: p.pos.z,
     tick: ctx.tickCount,
-    depthYd: p.dead ? null : abyssDepthYd(p.pos.x, p.pos.y, p.pos.z, abyss),
+    depthYd,
   });
   if (charged > 0) applyAbyssToll(ctx, p, charged);
 }
@@ -47,8 +56,10 @@ function landAura(ctx: SimContext, p: Entity, spec: AbyssTollAuraSpec): void {
     remaining: spec.duration,
     duration: spec.duration,
     value,
+    // A dot's share is already final: the wearer's own output modifiers
+    // (stance, damage buffs) must not scale a self-sourced toll tick.
     ...(spec.tickInterval !== undefined
-      ? { tickInterval: spec.tickInterval, tickTimer: spec.tickInterval }
+      ? { tickInterval: spec.tickInterval, tickTimer: spec.tickInterval, finalDamage: true }
       : {}),
     // Self-sourced: no attacker to credit, and the periodic-harm gate always
     // lets a self-sourced dot tick.

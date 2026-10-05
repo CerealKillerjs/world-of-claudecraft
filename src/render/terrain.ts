@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import {
+  getActiveWorldContent,
   STRIP_MAX_X,
   STRIP_MIN_X,
   WORLD_MAX_X,
   WORLD_MAX_Z,
   WORLD_MIN_Z,
-  ZONES,
 } from '../sim/data';
 import type { ZoneDef } from '../sim/types';
 import { WATER_LEVEL } from '../sim/world';
@@ -101,6 +101,38 @@ import { disposeZoneBuildPool, zoneBuildPool } from './zone_build_pool';
 // Exported for tests that reason about chunk-grid geometry without building a
 // full TerrainView (e.g. zone_eviction_core's cell-ownership overshoot pin).
 export const CHUNK_SIZE = 60;
+
+// The box the chunk grid (and the macro normal bake) spans, and the zones that
+// own its cells: the ACTIVE world's, re-read at every buildTerrain. For the
+// built-in world these are exactly data.ts WORLD_MAX_X / WORLD_MIN_Z /
+// WORLD_MAX_Z and ZONES (its active zones ARE that array), so nothing moves;
+// a code-built world pack that sits outside the built-in box (the abyss
+// world) gets a grid over its own ground instead of none. The grid stays
+// symmetric about x = 0, as it always was.
+let GRID_ZONES: readonly ZoneDef[] = getActiveWorldContent().zones;
+let GRID_MAX_X = WORLD_MAX_X;
+let GRID_MIN_Z = WORLD_MIN_Z;
+let GRID_MAX_Z = WORLD_MAX_Z;
+function syncGridToActiveWorld(): void {
+  const zones = getActiveWorldContent().zones;
+  GRID_ZONES = zones;
+  if (zones.length === 0) return;
+  let maxAbsX = 0;
+  let minZ = Infinity;
+  let maxZ = -Infinity;
+  for (const zone of zones) {
+    maxAbsX = Math.max(
+      maxAbsX,
+      Math.abs(zone.xMin ?? STRIP_MIN_X),
+      Math.abs(zone.xMax ?? STRIP_MAX_X),
+    );
+    minZ = Math.min(minZ, zone.zMin);
+    maxZ = Math.max(maxZ, zone.zMax);
+  }
+  GRID_MAX_X = maxAbsX;
+  GRID_MIN_Z = minZ;
+  GRID_MAX_Z = maxZ;
+}
 // An 'idle'-paced zone build waits for a browser idle slot between batches;
 // this timeout forces one batch through anyway under sustained frame load.
 const IDLE_BUILD_TIMEOUT_MS = 200;
@@ -345,8 +377,8 @@ function bakeNormalRegion(
 ): void {
   const w = NORMAL_TEX_W,
     h = NORMAL_TEX_H;
-  const worldW = WORLD_MAX_X * 2;
-  const worldD = WORLD_MAX_Z - WORLD_MIN_Z;
+  const worldW = GRID_MAX_X * 2;
+  const worldD = GRID_MAX_Z - GRID_MIN_Z;
   const stepX = worldW / w;
   const stepZ = worldD / h;
   // height window: the baked rect plus the 1-texel derivative stencil
@@ -357,10 +389,10 @@ function bakeNormalRegion(
   const hw = hi1 - hi0 + 1;
   const heights = new Float32Array(hw * (hj1 - hj0 + 1));
   for (let j = hj0; j <= hj1; j++) {
-    const z = WORLD_MIN_Z + (j + 0.5) * stepZ;
+    const z = GRID_MIN_Z + (j + 0.5) * stepZ;
     for (let i = hi0; i <= hi1; i++) {
       heights[(j - hj0) * hw + (i - hi0)] = meshTerrainHeight(
-        -WORLD_MAX_X + (i + 0.5) * stepX,
+        -GRID_MAX_X + (i + 0.5) * stepX,
         z,
         seed,
       );
@@ -1823,6 +1855,7 @@ export interface TerrainView {
 }
 
 export function buildTerrain(seed: number, priorityPoint?: { x: number; z: number }): TerrainView {
+  syncGridToActiveWorld();
   const lowGfx = !GFX.terrainSplat || !hasTerrainSplatAssets();
   // Resolved here, not inside the generator: gfx.ts reads document/navigator, so
   // a worker running the same generator would resolve a different tier.
@@ -1833,15 +1866,15 @@ export function buildTerrain(seed: number, priorityPoint?: { x: number; z: numbe
   const bands = lowGfx ? LOD_BANDS.low : LOD_BANDS.high;
   const group = new THREE.Group();
   group.name = 'terrain';
-  const worldDepth = WORLD_MAX_Z - WORLD_MIN_Z;
-  const chunksX = Math.ceil((WORLD_MAX_X * 2) / CHUNK_SIZE);
+  const worldDepth = GRID_MAX_Z - GRID_MIN_Z;
+  const chunksX = Math.ceil((GRID_MAX_X * 2) / CHUNK_SIZE);
   const chunksZ = Math.ceil(worldDepth / CHUNK_SIZE);
   const grid: ChunkGrid = {
     size: CHUNK_SIZE,
     countX: chunksX,
     countZ: chunksZ,
-    originX: -WORLD_MAX_X,
-    originZ: WORLD_MIN_Z,
+    originX: -GRID_MAX_X,
+    originZ: GRID_MIN_Z,
   };
   // 1 = this cell is owed terrain geometry and has not attached it yet, which
   // is the only state that may clamp the outdoor fog. Ownership is TOTAL
@@ -1869,18 +1902,18 @@ export function buildTerrain(seed: number, priorityPoint?: { x: number; z: numbe
   let lastVisibilityChunkCount = -1;
 
   // True when the chunk cell overlaps a mountain-wall band: an inter-zone
-  // ridge line (ZONES[i].zMax) or the world rim. Those chunks always take the
+  // ridge line (GRID_ZONES[i].zMax) or the world rim. Those chunks always take the
   // densest band; the walls sit far from every hub, so hub-distance LOD alone
   // hands the steepest, most looked-at cliffs the coarsest grid.
   const wallChunkAt = (x0: number, z0: number, size: number): boolean => {
-    if (x0 < -WORLD_MAX_X + WALL_LOD_RIM_MARGIN || x0 + size > WORLD_MAX_X - WALL_LOD_RIM_MARGIN) {
+    if (x0 < -GRID_MAX_X + WALL_LOD_RIM_MARGIN || x0 + size > GRID_MAX_X - WALL_LOD_RIM_MARGIN) {
       return true;
     }
-    if (z0 < WORLD_MIN_Z + WALL_LOD_RIM_MARGIN || z0 + size > WORLD_MAX_Z - WALL_LOD_RIM_MARGIN) {
+    if (z0 < GRID_MIN_Z + WALL_LOD_RIM_MARGIN || z0 + size > GRID_MAX_Z - WALL_LOD_RIM_MARGIN) {
       return true;
     }
-    for (let i = 0; i + 1 < ZONES.length; i++) {
-      const ridgeZ = ZONES[i].zMax;
+    for (let i = 0; i + 1 < GRID_ZONES.length; i++) {
+      const ridgeZ = GRID_ZONES[i].zMax;
       if (z0 - WALL_LOD_RIDGE_HALF < ridgeZ && z0 + size + WALL_LOD_RIDGE_HALF > ridgeZ) {
         return true;
       }
@@ -1891,13 +1924,13 @@ export function buildTerrain(seed: number, priorityPoint?: { x: number; z: numbe
   // The zone rectangles do NOT tile the world box. Three kinds of cell fall
   // outside every one of them: the whole quadrant west of Eastbrook Vale (no
   // realm sits at x < -180 for z -180..180), the centre column north of
-  // Frostveil, and the grid's last row, which overhangs WORLD_MAX_Z and so
+  // Frostveil, and the grid's last row, which overhangs GRID_MAX_Z and so
   // carries the northern 20yd of the Drakelands rim. Those cells still hold
   // ground a player reaches on foot: the tongue of land running south out of
   // the Willowfen border around (-195, 161) sits 1.6yd ABOVE the waterline.
   // Leaving them unowned meant no zone's build ever meshed them, so that
   // ground rendered as a hole you could see (and fall) through.
-  const zoneRects: WorldRect[] = ZONES.map((zone) => ({
+  const zoneRects: WorldRect[] = GRID_ZONES.map((zone) => ({
     minX: zone.xMin ?? STRIP_MIN_X,
     maxX: zone.xMax ?? STRIP_MAX_X,
     minZ: zone.zMin,
@@ -1907,8 +1940,8 @@ export function buildTerrain(seed: number, priorityPoint?: { x: number; z: numbe
     zoneRects.some((r) => x >= r.minX && x < r.maxX && z >= r.minZ && z < r.maxZ);
 
   const bandIndexAt = (cx: number, cz: number): number => {
-    const x0 = -WORLD_MAX_X + cx * CHUNK_SIZE;
-    const z0 = WORLD_MIN_Z + cz * CHUNK_SIZE;
+    const x0 = -GRID_MAX_X + cx * CHUNK_SIZE;
+    const z0 = GRID_MIN_Z + cz * CHUNK_SIZE;
     const centerX = x0 + CHUNK_SIZE / 2;
     const centerZ = z0 + CHUNK_SIZE / 2;
     // Cells outside every realm (see zoneRects) are open sea floor and the
@@ -1921,7 +1954,7 @@ export function buildTerrain(seed: number, priorityPoint?: { x: number; z: numbe
     if (!insideAnyZone(centerX, centerZ)) return bands.length - 1;
     if (wallChunkAt(x0, z0, CHUNK_SIZE)) return 0;
     let hubDist = Infinity;
-    for (const zn of ZONES) {
+    for (const zn of GRID_ZONES) {
       hubDist = Math.min(hubDist, Math.hypot(centerX - zn.hub.x, centerZ - zn.hub.z));
     }
     const idx = bands.findIndex((b) => hubDist <= b.maxHubDist);
@@ -1966,8 +1999,8 @@ export function buildTerrain(seed: number, priorityPoint?: { x: number; z: numbe
     // so keying the fog off it would open the view over ground that has not
     // arrived. A far-band super-chunk covers a 2x2 block, hence the span.
     const span = Math.max(1, Math.round(size / CHUNK_SIZE));
-    const cx0 = Math.round((x0 + WORLD_MAX_X) / CHUNK_SIZE);
-    const cz0 = Math.round((z0 - WORLD_MIN_Z) / CHUNK_SIZE);
+    const cx0 = Math.round((x0 + GRID_MAX_X) / CHUNK_SIZE);
+    const cz0 = Math.round((z0 - GRID_MIN_Z) / CHUNK_SIZE);
     for (let dz = 0; dz < span; dz++) {
       for (let dx = 0; dx < span; dx++) {
         const cx = cx0 + dx;
@@ -2076,9 +2109,9 @@ export function buildTerrain(seed: number, priorityPoint?: { x: number; z: numbe
   // else (the gap cells described at zoneRects) the nearest zone rectangle.
   // See owningRectIndex for why nearest-rect and not zoneAt's z-band clamp.
   const cellOwnerId = (cx: number, cz: number): string => {
-    const x = -WORLD_MAX_X + (cx + 0.5) * CHUNK_SIZE;
-    const z = WORLD_MIN_Z + (cz + 0.5) * CHUNK_SIZE;
-    return ZONES[owningRectIndex(x, z, zoneRects)].id;
+    const x = -GRID_MAX_X + (cx + 0.5) * CHUNK_SIZE;
+    const z = GRID_MIN_Z + (cz + 0.5) * CHUNK_SIZE;
+    return GRID_ZONES[owningRectIndex(x, z, zoneRects)].id;
   };
   groundPending.fill(1);
   let islandScoped = false;
@@ -2122,8 +2155,8 @@ export function buildTerrain(seed: number, priorityPoint?: { x: number; z: numbe
   const claimCell = (zoneId: string, cx: number, cz: number): ChunkJob | null => {
     const cell = cz * chunksX + cx;
     if (built.has(cell)) return null;
-    const x0 = -WORLD_MAX_X + cx * CHUNK_SIZE;
-    const z0 = WORLD_MIN_Z + cz * CHUNK_SIZE;
+    const x0 = -GRID_MAX_X + cx * CHUNK_SIZE;
+    const z0 = GRID_MIN_Z + cz * CHUNK_SIZE;
     const superCells = [
       [cx, cz],
       [cx + 1, cz],
@@ -2159,10 +2192,10 @@ export function buildTerrain(seed: number, priorityPoint?: { x: number; z: numbe
       minZ,
       maxX,
       maxZ,
-      -WORLD_MAX_X,
-      WORLD_MIN_Z,
-      WORLD_MAX_X * 2,
-      WORLD_MAX_Z - WORLD_MIN_Z,
+      -GRID_MAX_X,
+      GRID_MIN_Z,
+      GRID_MAX_X * 2,
+      GRID_MAX_Z - GRID_MIN_Z,
       NORMAL_TEX_W,
       NORMAL_TEX_H,
       1,
@@ -2180,8 +2213,8 @@ export function buildTerrain(seed: number, priorityPoint?: { x: number; z: numbe
     const zoneBounds = normalTexelsOver(minX, zone.zMin, maxX, zone.zMax);
     if (zoneBounds) regions.push(zoneBounds);
     for (const [cx, cz] of cells) {
-      const x0 = -WORLD_MAX_X + cx * CHUNK_SIZE;
-      const z0 = WORLD_MIN_Z + cz * CHUNK_SIZE;
+      const x0 = -GRID_MAX_X + cx * CHUNK_SIZE;
+      const z0 = GRID_MIN_Z + cz * CHUNK_SIZE;
       const inside =
         x0 >= minX && x0 + CHUNK_SIZE <= maxX && z0 >= zone.zMin && z0 + CHUNK_SIZE <= zone.zMax;
       if (inside) continue; // already covered by zoneBounds
@@ -2349,8 +2382,8 @@ export function buildTerrain(seed: number, priorityPoint?: { x: number; z: numbe
         // far-band super-chunk covers a 2x2 block, so its release must clear
         // every cell it attached, not just the one nearest its origin.
         const span = Math.max(1, Math.round(chunk.size / CHUNK_SIZE));
-        const cx0 = Math.round((chunk.x0 + WORLD_MAX_X) / CHUNK_SIZE);
-        const cz0 = Math.round((chunk.z0 - WORLD_MIN_Z) / CHUNK_SIZE);
+        const cx0 = Math.round((chunk.x0 + GRID_MAX_X) / CHUNK_SIZE);
+        const cz0 = Math.round((chunk.z0 - GRID_MIN_Z) / CHUNK_SIZE);
         // The origin cell alone decides ownership: attachChunk's superOk gate
         // only ever forms a super-chunk when all four of its cells already
         // share one owner (see ensureZone above), so a mixed-ownership
@@ -2425,10 +2458,10 @@ export function buildTerrain(seed: number, priorityPoint?: { x: number; z: numbe
         minZ,
         maxX,
         maxZ,
-        -WORLD_MAX_X,
-        WORLD_MIN_Z,
-        WORLD_MAX_X * 2,
-        WORLD_MAX_Z - WORLD_MIN_Z,
+        -GRID_MAX_X,
+        GRID_MIN_Z,
+        GRID_MAX_X * 2,
+        GRID_MAX_Z - GRID_MIN_Z,
         NORMAL_TEX_W,
         NORMAL_TEX_H,
         1,

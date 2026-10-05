@@ -6,6 +6,7 @@
 // map's override when one is loaded, else the built-in constant) against the
 // same deterministic terrainHeight the sim uses. Registered in
 // RENDER_PURE_CORES (tests/architecture.test.ts).
+import { getActiveWorldContent } from '../sim/data';
 import { terrainHeight, waterLevel } from '../sim/world';
 
 export interface WaterFieldPlan {
@@ -142,6 +143,12 @@ export function advanceWaterSchedule(
 // Depth of the ACTIVE water surface above the terrain at (x, z): positive in
 // open water, negative on dry land.
 export function shoreDepthAt(x: number, z: number, seed: number): number {
+  // A code-built world can hold dry ground below sea level (the abyss pit):
+  // read it as shore so the dry-tile cull drops the sheet over it.
+  const model = getActiveWorldContent().terrainModel;
+  if (model && !model.isOpenSea(x, z, seed, waterLevel())) {
+    return Math.min(0, waterLevel() - terrainHeight(x, z, seed));
+  }
   return waterLevel() - terrainHeight(x, z, seed);
 }
 

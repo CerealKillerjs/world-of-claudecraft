@@ -8988,7 +8988,16 @@ export interface WorldTerrainModel {
   /** The ground palette at a point, for worlds whose biomes are not
    *  rectangles (a round pit inside a round city). Absent: the zone's biome. */
   biomeAt?(x: number, z: number): BiomeId;
+  /** The built surface laid over the ground at a point (city paving, a
+   *  street, a terrace wall's face), or null for natural ground. Render-only:
+   *  the terrain paint reads it, the sim never does. */
+  surfaceAt?(x: number, z: number): GroundSurface | null;
 }
+
+/** A built or worked surface over a code-built world's ground, for the
+ *  terrain paint: stone paving, a cobbled street or stair lane, the masonry
+ *  face of a retaining wall, a garden plot left green, packed bare earth. */
+export type GroundSurface = 'paving' | 'street' | 'masonry' | 'garden' | 'earth';
 
 /** The resolved storage price tables every sim price read consumes: bank slot
  *  expansions, bank bag sockets, and Materials Vault rungs (index 0 of

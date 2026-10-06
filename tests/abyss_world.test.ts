@@ -16,10 +16,7 @@ import {
   abyssRegionAt,
   abyssTerrainHeight,
   buildAbyssTiles,
-  CITY_AVENUES,
   CITY_OUTER_RADIUS,
-  CITY_TERRACE_RISE,
-  CITY_TERRACES,
   CITY_TOP_HEIGHT,
   depthMetersAtY,
   LAYER1_CAMP_CENTER,
@@ -29,7 +26,6 @@ import {
   layerFloorY,
   metersToYards,
   PIT_RADIUS,
-  RIM_OUTER_RADIUS,
   SPIRAL_END_PHI,
   SPIRAL_GRADE,
   SPIRAL_START_ANGLE,
@@ -165,38 +161,13 @@ describe('abyss terrain: the spiral descent through layer 1', () => {
 });
 
 describe('abyss terrain: the terraced city around the rim', () => {
-  const step = (Math.PI * 2) / CITY_AVENUES;
-
-  it('stands at the rim height on the plaza and climbs in terraces to the edge', () => {
+  // the street plan, walls, lanes and avenues are pinned in abyss_city.test.ts
+  it('stands at the rim height on the plaza and climbs to the city edge', () => {
     const rim = polar(PIT_RADIUS + 5, 0.4);
     expect(Math.abs(h(rim.x, rim.z))).toBeLessThan(0.5);
-    const top = polar(CITY_OUTER_RADIUS, SPIRAL_START_ANGLE + step / 2);
+    const top = polar(CITY_OUTER_RADIUS, SPIRAL_START_ANGLE + 0.4);
     expect(h(top.x, top.z)).toBeCloseTo(CITY_TOP_HEIGHT, 0);
-    expect(CITY_TOP_HEIGHT).toBe(2 + CITY_TERRACES * CITY_TERRACE_RISE);
-  });
-
-  it('lets every avenue ramp walkably from the rim to the city edge', () => {
-    for (let a = 0; a < CITY_AVENUES; a++) {
-      const theta = SPIRAL_START_ANGLE + a * step;
-      let worst = 0;
-      for (let r = RIM_OUTER_RADIUS - 20; r < CITY_OUTER_RADIUS - 2; r += 2) {
-        const p = polar(r, theta);
-        const q = polar(r + 2, theta);
-        worst = Math.max(worst, Math.abs(h(q.x, q.z) - h(p.x, p.z)) / 2);
-      }
-      expect(worst).toBeLessThan(PLAYER_MAX_CLIMB_SLOPE);
-    }
-  });
-
-  it('cuts retaining walls between terraces away from the avenues', () => {
-    const theta = SPIRAL_START_ANGLE + step / 2;
-    let worst = 0;
-    for (let r = RIM_OUTER_RADIUS; r < CITY_OUTER_RADIUS - 2; r += 0.5) {
-      const p = polar(r, theta);
-      const q = polar(r + 0.5, theta);
-      worst = Math.max(worst, Math.abs(h(q.x, q.z) - h(p.x, p.z)) / 0.5);
-    }
-    expect(worst).toBeGreaterThan(PLAYER_MAX_CLIMB_SLOPE);
+    expect(CITY_TOP_HEIGHT).toBeGreaterThan(40);
   });
 });
 

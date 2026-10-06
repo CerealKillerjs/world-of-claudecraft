@@ -15,6 +15,7 @@ import {
   abyssBiomeAt,
   abyssIsOpenSea,
   abyssRoads,
+  abyssSurfaceAt,
   abyssTerrainHeight,
   buildAbyssProps,
   buildAbyssTiles,
@@ -53,6 +54,7 @@ export function abyssWorld(): WorldContent {
       height: abyssTerrainHeight,
       isOpenSea: abyssIsOpenSea,
       biomeAt: abyssBiomeAt,
+      surfaceAt: abyssSurfaceAt,
     },
   };
   return built;

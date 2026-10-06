@@ -32,8 +32,10 @@ export const ABYSS_CENTER = { x: 0, z: -4200 } as const;
 
 /** Radius of the pit's mouth: a ~1,000 m wide opening (1,094 yd across). */
 export const PIT_RADIUS = 547;
-/** Outer edge of the rim ring (the central district: lifts, guild hall, market). */
-export const RIM_OUTER_RADIUS = 750;
+/** Mean outer edge of the rim plaza (the central district: lifts, the
+ *  explorers' hall, the market), where the first terrace wall rises. The wall
+ *  itself wanders a little either side (city_plan.ts). */
+export const RIM_OUTER_RADIUS = 820;
 /** Outer edge of the city: 3 km across (1,640 yd radius). */
 export const CITY_OUTER_RADIUS = 1640;
 /** Where the island's farmland meets the beach. */

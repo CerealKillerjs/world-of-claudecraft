@@ -8,6 +8,10 @@
 // stone arch overgrown with green as the ceremonial way down. We take the
 // feeling and the composition, never a specific building.
 //
+// The terrace blocks (rows of houses, gardens, plazas, the parapets on the
+// terrace walls) live in city_blocks.ts on the street plan (city_plan.ts);
+// this file keeps the rim, the pit, and the assembly.
+//
 // Everything is a pure function of fixed constants (no world seed, no Rng):
 // placements are content, identical on every host and every boot. hash2 with
 // a fixed salt stands in for hand placement.
@@ -15,17 +19,16 @@
 import { hash2 } from '../rng';
 import type { CampDef, MailboxDef, ZonePropsDef } from '../types';
 import {
-  ABYSS_CENTER,
-  CITY_OUTER_RADIUS,
-  ISLAND_RADIUS,
-  PIT_RADIUS,
-  RIM_OUTER_RADIUS,
-} from './geometry';
+  cityBlockProps,
+  cityParapets,
+  cityPlazas,
+  cityRingStreets,
+  RIM_RING_RADIUS,
+} from './city_blocks';
+import { avenueAngleAt, CITY_AVENUE_COUNT, NORTH_AVENUE } from './city_plan';
+import { ABYSS_CENTER, ISLAND_RADIUS, PIT_RADIUS } from './geometry';
 import { LAYER1_CAMP_CENTER, RIM_GRAVEYARD } from './regions';
 import {
-  CITY_AVENUES,
-  CITY_TERRACES,
-  distanceToAvenue,
   HANGING_QUARTER_FROM,
   HANGING_QUARTER_TO,
   HANGING_SHELF_DEPTH,
@@ -38,7 +41,6 @@ const TAU = Math.PI * 2;
 const cx = ABYSS_CENTER.x;
 const cz = ABYSS_CENTER.z;
 const SALT = 0x5a1d;
-const TERRACE_RUN = (CITY_OUTER_RADIUS - RIM_OUTER_RADIUS) / CITY_TERRACES;
 
 // World point at local polar (r, theta) around the pit axis.
 function at(r: number, theta: number): { x: number; z: number } {
@@ -59,77 +61,11 @@ function rand(i: number, j: number): number {
   return hash2(i, j, SALT);
 }
 
-/** A house kind with its measured scale, collider radius, and height
- *  (mirrors the Evergarden town's authored hex-kit entries). */
-interface HouseKind {
-  key: string;
-  scale: number;
-  r: number;
-  h: number;
-}
-
-const HOUSES: readonly HouseKind[] = [
-  { key: 'hexHomeA', scale: 7.5, r: 5.2, h: 11 },
-  { key: 'hexHomeB', scale: 7.5, r: 5.2, h: 11 },
-  { key: 'hexbHomeA', scale: 7.5, r: 5.2, h: 11 },
-  { key: 'hexbHomeB', scale: 7.5, r: 5.2, h: 11 },
-  { key: 'hexrHomeA', scale: 7.5, r: 5.2, h: 11 },
-  { key: 'hexrHomeB', scale: 7.5, r: 5.2, h: 11 },
-];
-const LANDMARKS: readonly HouseKind[] = [
-  { key: 'hexTavern', scale: 8, r: 6, h: 13 },
-  { key: 'hexbWorkshop', scale: 8, r: 6, h: 12 },
-  { key: 'hexChurch', scale: 8, r: 5.6, h: 15 },
-  { key: 'hexTower', scale: 8, r: 4, h: 17 },
-  { key: 'hexbTowerA', scale: 8, r: 4.5, h: 18 },
-];
-
-/** Gap left clear around each avenue so the view down it reaches the pit. */
-const AVENUE_CLEAR = 22;
-
-/** The terraced houses: two rows per terrace, one backed against the upper
- *  retaining wall and one along the lower edge, with a ring street between.
- *  Inner terraces (nearest the pit) are packed tight, outer ones thin out into
- *  clusters with gardens between, like a town that grew outward from the rim. */
-function terraceHouses(): DecorProp[] {
-  const out: DecorProp[] = [];
-  for (let k = 0; k < CITY_TERRACES; k++) {
-    const start = RIM_OUTER_RADIUS + k * TERRACE_RUN;
-    const rows = [start + 14, start + TERRACE_RUN - 16];
-    const spacing = k < 3 ? 17 : 24;
-    const keepChance = k < 2 ? 1 : k < 4 ? 0.82 : 0.6;
-    rows.forEach((r, row) => {
-      const count = Math.floor((TAU * r) / spacing);
-      for (let i = 0; i < count; i++) {
-        const theta = SPIRAL_START_ANGLE + (i / count) * TAU;
-        const p = at(r, theta);
-        if (distanceToAvenue(p.x - cx, p.z - cz) < AVENUE_CLEAR) continue;
-        // clustered thinning: neighbourhoods, not salt-and-pepper
-        const cluster = rand(Math.floor(i / 6), k * 7 + row);
-        if (cluster > keepChance) continue;
-        const pick = rand(i, k * 31 + row * 3 + 1);
-        const kind = pick < 0.06 ? LANDMARKS[Math.floor(rand(i, k + 99) * LANDMARKS.length)] : null;
-        const house = kind ?? HOUSES[Math.floor(pick * HOUSES.length) % HOUSES.length];
-        out.push({
-          key: house.key,
-          x: p.x,
-          z: p.z,
-          rot: facePit(theta) + (rand(i, k + 7) - 0.5) * 0.3,
-          scale: house.scale,
-          r: house.r,
-          h: house.h,
-        });
-      }
-    });
-  }
-  return out;
-}
-
 /** The rim district: the explorers' hall on the north rim (seen across the
  *  pit from the descent), the market by the arch, watchtowers along the ring. */
 function rimLandmarks(): DecorProp[] {
   const out: DecorProp[] = [];
-  const north = Math.PI / 2;
+  const north = avenueAngleAt(NORTH_AVENUE, PIT_RADIUS);
   const hall = at(PIT_RADIUS + 60, north);
   out.push({
     key: 'hexrCastle',
@@ -152,9 +88,12 @@ function rimLandmarks(): DecorProp[] {
       h: 22,
     });
   }
-  // watchtowers every eighth of the ring, between the avenues
-  for (let i = 0; i < CITY_AVENUES; i++) {
-    const theta = SPIRAL_START_ANGLE + ((i + 0.5) / CITY_AVENUES) * TAU;
+  // watchtowers on the edge halfway between neighbouring avenue gates
+  for (let i = 0; i < CITY_AVENUE_COUNT; i++) {
+    const a = avenueAngleAt(i, PIT_RADIUS);
+    let b = avenueAngleAt((i + 1) % CITY_AVENUE_COUNT, PIT_RADIUS);
+    if (b < a) b += TAU;
+    const theta = (a + b) / 2;
     if (Math.abs(Math.sin((theta - north) / 2)) < 0.1) continue; // the hall stands there
     const p = at(PIT_RADIUS + 30, theta);
     out.push({ key: 'hexWatchtower', x: p.x, z: p.z, rot: facePit(theta), scale: 7, r: 3.2, h: 9 });
@@ -169,24 +108,6 @@ function rimLandmarks(): DecorProp[] {
       const p = at(r, theta);
       out.push({ key, x: p.x, z: p.z, rot: facePit(theta), scale: 1, r: 1.6, h: 3 });
     }
-  }
-  // rim-ring houses between the plaza and the first terrace
-  const count = Math.floor((TAU * (RIM_OUTER_RADIUS - 24)) / 18);
-  for (let i = 0; i < count; i++) {
-    const theta = SPIRAL_START_ANGLE + (i / count) * TAU;
-    const p = at(RIM_OUTER_RADIUS - 24, theta);
-    if (distanceToAvenue(p.x - cx, p.z - cz) < AVENUE_CLEAR) continue;
-    if (Math.abs(Math.sin((theta - north) / 2)) < 0.12) continue;
-    const house = HOUSES[Math.floor(rand(i, 501) * HOUSES.length) % HOUSES.length];
-    out.push({
-      key: house.key,
-      x: p.x,
-      z: p.z,
-      rot: facePit(theta),
-      scale: house.scale,
-      r: house.r,
-      h: house.h,
-    });
   }
   return out;
 }
@@ -299,26 +220,24 @@ function campProps(): Pick<ZonePropsDef, 'tents' | 'campfires' | 'crates'> {
   };
 }
 
-/** Roads: the eight avenues from the arch ring out to the coast, plus the rim
- *  ring road and one ring street per terrace pair. Streetlamps follow them. */
+/** Roads: the eight avenues along their bends from the rim out to the coast,
+ *  the rim ring road, and a ring street on every other terrace. Streetlamps
+ *  follow them. */
 export function abyssRoads(): { x: number; z: number }[][] {
   const roads: { x: number; z: number }[][] = [];
-  for (let i = 0; i < CITY_AVENUES; i++) {
-    const theta = SPIRAL_START_ANGLE + (i / CITY_AVENUES) * TAU;
+  for (let i = 0; i < CITY_AVENUE_COUNT; i++) {
     const line: { x: number; z: number }[] = [];
-    for (let r = PIT_RADIUS + 12; r <= ISLAND_RADIUS - 140; r += 60) line.push(at(r, theta));
+    for (let r = PIT_RADIUS + 12; r <= ISLAND_RADIUS - 140; r += 30) {
+      line.push(at(r, avenueAngleAt(i, r)));
+    }
     roads.push(line);
   }
-  for (const r of [
-    PIT_RADIUS + 115,
-    RIM_OUTER_RADIUS + TERRACE_RUN * 1.5,
-    RIM_OUTER_RADIUS + TERRACE_RUN * 3.5,
-  ]) {
-    const ring: { x: number; z: number }[] = [];
-    const segs = Math.ceil((TAU * r) / 40);
-    for (let i = 0; i <= segs; i++) ring.push(at(r, (i / segs) * TAU));
-    roads.push(ring);
-  }
+  const rimRing: { x: number; z: number }[] = [];
+  const rimR = RIM_RING_RADIUS;
+  const segs = Math.ceil((TAU * rimR) / 40);
+  for (let i = 0; i <= segs; i++) rimRing.push(at(rimR, (i / segs) * TAU));
+  roads.push(rimRing);
+  roads.push(...cityRingStreets());
   return roads;
 }
 
@@ -333,10 +252,11 @@ export const ABYSS_CAMPS: CampDef[] = [];
 /** The whole prop set for the pack. */
 export function buildAbyssProps(): ZonePropsDef {
   const camp = campProps();
+  const plazas = cityPlazas();
   return {
     buildings: [],
-    wells: [],
-    stalls: [],
+    wells: plazas.wells,
+    stalls: plazas.stalls,
     mines: [],
     docks: [],
     tents: camp.tents,
@@ -345,14 +265,14 @@ export function buildAbyssProps(): ZonePropsDef {
     campfires: camp.campfires,
     mudHuts: [],
     ruinRings: [],
-    fences: rimParapet(),
+    fences: [...rimParapet(), ...cityParapets()],
     graveyards: [RIM_GRAVEYARD],
     decorProps: [
       ...descentArch(),
       ...rimLandmarks(),
       ...rimScaffolds(),
       ...hangingQuarter(),
-      ...terraceHouses(),
+      ...cityBlockProps(),
     ],
   };
 }

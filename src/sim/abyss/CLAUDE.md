@@ -15,15 +15,28 @@ world stays the default and is untouched). Design source:
   conversions; everything else reads them from here.
 - `terrain.ts`: the analytic heightfield (`abyssTerrainHeight`) and the
   open-sea rule (`abyssIsOpenSea`) the pack hands the sim as its
-  `WorldTerrainModel`. Shape constants (the spiral ledge, terraces, avenues,
-  the hanging quarter) live here so the layout and the tests share them.
+  `WorldTerrainModel`. Shape constants for the pit (the spiral ledge, the
+  hanging quarter) live here so the layout and the tests share them; the
+  city's ground comes from `city_plan.ts`.
+- `city_plan.ts`: Rimholt's street plan and the city ground it makes:
+  irregular terrace walls built from straight runs (`wallRadiusAt`,
+  `wallCorners`), the bending avenues, the stair lanes through each wall,
+  the five districts, and the garden plots. `cityGround` is the one height
+  and surface read the terrain, the layout and the paint all share.
+- `city_blocks.ts`: the built blocks on that plan: rows of houses that follow
+  the wall runs, district by district, garden pieces, plazas (wells and
+  stalls), the parapets on the wall tops, and the ring streets.
+- `surface.ts`: what the ground is made of where it is built (paving, street,
+  masonry, garden, earth), the pack's render-only `surfaceAt` hook; the
+  painter is `src/render/ground_surface_core.ts`.
 - `regions.ts`: the three named regions (names, welcome lines, points of
   interest; what the translation catalog keys) and the rectangle tiles the
   engine streams (`<region>@<col>_<row>`, normalized by `data.ts`
   `zoneRegionId`).
-- `city_layout.ts`: the rule-built props (houses, landmarks, the descent arch,
-  scaffolds, the hanging quarter, the rim parapet, the boundary camp), roads,
-  and mailboxes. Every choice is a `hash2` of fixed inputs: no `Rng` draws.
+- `city_layout.ts`: the rim and pit props (landmarks, the descent arch,
+  scaffolds, the hanging quarter, the rim parapet, the boundary camp), the
+  road network, the mailboxes, and the assembly of the whole prop set. Every
+  choice is a `hash2` of fixed inputs: no `Rng` draws.
 
 ## Rules
 - Coordinates: every radius is measured from `ABYSS_CENTER`, which sits far
@@ -35,4 +48,10 @@ world stays the default and is untouched). Design source:
   colliders, pathfinding, and all three hosts sample the same ground.
 - Every new player-visible name is IP-checked first (root CLAUDE.md); the
   current ones are recorded in `regions.ts`.
-- Tests: `tests/abyss_world.test.ts`.
+- The city is meant to read as organic and a little irregular yet plainly
+  man-made (owner's brief, 2026-10-05): walls of straight runs at uneven
+  corners, not circles; rows that follow the walls, not rings; avenues that
+  bend, not spokes. Keep that when extending it.
+- Tests: `tests/abyss_world.test.ts` (scale, pit, regions, boot),
+  `tests/abyss_city.test.ts` (plan, ground, blocks), `tests/abyss_terrain_paint.test.ts`
+  and `tests/ground_surface_core.test.ts` (the paint).

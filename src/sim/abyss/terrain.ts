@@ -16,14 +16,17 @@
 // - The spiral ends on the layer 1 floor, 1,350 m (1,476 yd) below the rim,
 //   where the boundary camp stands.
 //
-// The city climbs AWAY from the pit in stepped ring terraces cut by radial
-// avenues that ramp smoothly between them, so the whole city looks down on the
-// mouth like an amphitheatre. Past the city the island rolls out to its beaches.
+// The city climbs AWAY from the pit in stepped terraces held up by irregular,
+// hand-built retaining walls, cut by avenues that ramp smoothly between them
+// and by narrow stair lanes, so the whole city looks down on the mouth like an
+// amphitheatre (the plan and its ground: city_plan.ts). Past the city the
+// island rolls out to its beaches.
 //
 // Every shape constant lives here so the world pack (which places the camp,
 // railings, and buildings ON this ground) and the tests share one definition.
 
 import { fbm2 } from '../rng';
+import { CITY_EDGE_HEIGHT, cityGroundHeight } from './city_plan';
 import {
   ABYSS_CENTER,
   CITY_OUTER_RADIUS,
@@ -32,7 +35,6 @@ import {
   LAYER1_FLOOR_Y,
   PIT_RADIUS,
   RIM_HEIGHT,
-  RIM_OUTER_RADIUS,
 } from './geometry';
 
 const TAU = Math.PI * 2;
@@ -193,66 +195,25 @@ function hangingQuarterWeight(base: number): number {
   return c * c * (3 - 2 * c);
 }
 
+/** How fully a LOCAL point stands on the hanging quarter's shelf (0 off it):
+ *  inside the quarter's angular window and within the shelf's reach of the
+ *  rim edge. The ground paint reads it. */
+export function hangingShelfWeight(x: number, z: number): number {
+  const r = Math.hypot(x, z);
+  const d = PIT_RADIUS - r;
+  if (d < 0 || d > HANGING_SHELF_DEPTH) return 0;
+  let base = (SPIRAL_DIR * (Math.atan2(z, x) - SPIRAL_START_ANGLE)) % TAU;
+  if (base < 0) base += TAU;
+  return hangingQuarterWeight(base);
+}
+
 function hangingShelfHeight(d: number, x: number, z: number, seed: number): number {
   const lumps = (fbm2(x * 0.08, z * 0.08, seed + 433, 2) - 0.5) * 1.5;
   return RIM_HEIGHT - HANGING_SHELF_GRADE * Math.min(d, HANGING_SHELF_DEPTH) + lumps;
 }
 
-/** Number of terraces the city steps up in, from the rim ring to the edge. */
-export const CITY_TERRACES = 6;
-/** Rise of one terrace. */
-export const CITY_TERRACE_RISE = 8;
-/** Horizontal run of a terrace's retaining wall (too steep to walk up). */
-const CITY_RISER_RUN = 4;
-/** The radial avenues: evenly spaced, the first due south toward the harbor. */
-export const CITY_AVENUES = 8;
-/** Half width of an avenue's ramp, plus the blend into the terraces. */
-const AVENUE_HALF_WIDTH = 9;
-const AVENUE_BLEND = 14;
-
-const TERRACE_RUN = (CITY_OUTER_RADIUS - RIM_OUTER_RADIUS) / CITY_TERRACES;
-/** Height of the top terrace (the city's outer edge). */
-export const CITY_TOP_HEIGHT = RIM_HEIGHT + 2 + CITY_TERRACES * CITY_TERRACE_RISE;
-
-/** Distance in yards from LOCAL (x, z) (relative to the pit axis) to the
- *  nearest avenue centre line. */
-export function distanceToAvenue(x: number, z: number): number {
-  const r = Math.hypot(x, z);
-  const theta = Math.atan2(z, x) - SPIRAL_START_ANGLE;
-  const step = TAU / CITY_AVENUES;
-  let local = theta % step;
-  if (local < 0) local += step;
-  const off = Math.min(local, step - local);
-  return Math.sin(Math.min(off, Math.PI / 2)) * r;
-}
-
-// Height of the city floor at radius r (rim ring plus terraces).
-function cityHeight(x: number, z: number, r: number): number {
-  if (r <= RIM_OUTER_RADIUS) {
-    // the rim plaza: level at the edge, lifting 2 yd toward the first terrace
-    const t = (r - PIT_RADIUS) / (RIM_OUTER_RADIUS - PIT_RADIUS);
-    return RIM_HEIGHT + 2 * t * t;
-  }
-  const u = (r - RIM_OUTER_RADIUS) / TERRACE_RUN;
-  const k = Math.min(CITY_TERRACES - 1, Math.floor(u));
-  const f = (u - k) * TERRACE_RUN; // yards into terrace k
-  const riserStart = TERRACE_RUN - CITY_RISER_RUN;
-  let s = 0;
-  if (f > riserStart) {
-    const c = (f - riserStart) / CITY_RISER_RUN;
-    s = c * c * (3 - 2 * c);
-  }
-  const stepped = RIM_HEIGHT + 2 + (k + s) * CITY_TERRACE_RISE;
-  // the avenues ramp straight through, the same rise over the full run
-  const ramp = RIM_HEIGHT + 2 + Math.min(CITY_TERRACES, u) * CITY_TERRACE_RISE;
-  const d = distanceToAvenue(x, z);
-  if (d >= AVENUE_HALF_WIDTH + AVENUE_BLEND) return stepped;
-  if (d <= AVENUE_HALF_WIDTH) return ramp;
-  const b = (d - AVENUE_HALF_WIDTH) / AVENUE_BLEND;
-  const w = b * b * (3 - 2 * b);
-  // blend only where it keeps the terrace walkable: meet the terrace level
-  return ramp + (stepped - ramp) * w;
-}
+/** Height of the city's outer edge, where the island's farmland begins. */
+export const CITY_TOP_HEIGHT = CITY_EDGE_HEIGHT;
 
 /** Sea floor far from the island. */
 const SEA_FLOOR = -26;
@@ -262,7 +223,7 @@ function islandHeight(x: number, z: number, r: number, seed: number): number {
   const roll = fbm2(x * 0.004, z * 0.004, seed + 421, 4);
   // a long gentle crest just past the city, falling to the shore
   const t = (r - CITY_OUTER_RADIUS) / (ISLAND_RADIUS - CITY_OUTER_RADIUS);
-  const crest = CITY_TOP_HEIGHT + 6 - 50 * t ** 1.4;
+  const crest = CITY_TOP_HEIGHT + 6 - (CITY_TOP_HEIGHT + 2) * t ** 1.4;
   const blendIn = Math.min(1, (r - CITY_OUTER_RADIUS) / 60);
   const land = CITY_TOP_HEIGHT + (crest + (roll - 0.5) * 22 * blendIn - CITY_TOP_HEIGHT) * blendIn;
   if (r <= ISLAND_RADIUS - 120) return land;
@@ -278,7 +239,7 @@ export function abyssTerrainHeight(wx: number, wz: number, seed: number): number
   const z = wz - ABYSS_CENTER.z;
   const r = Math.hypot(x, z);
   if (r < PIT_RADIUS) return pitHeight(x, z, r, seed);
-  if (r <= CITY_OUTER_RADIUS) return cityHeight(x, z, r);
+  if (r <= CITY_OUTER_RADIUS) return cityGroundHeight(x, z);
   return islandHeight(x, z, r, seed);
 }
 

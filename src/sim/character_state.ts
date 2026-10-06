@@ -3,6 +3,7 @@
 // gameplay module. New fields remain optional unless every historical save can
 // supply them.
 
+import type { SavedExpeditionBag } from './abyss/expedition_bag';
 import type { SavedBankState } from './bank';
 import type { SavedLoadout, TalentAllocation } from './content/talents';
 import type { SavedCooldowns } from './cooldown_persist';
@@ -229,6 +230,10 @@ export interface CharacterState {
   // ghost on relog (auto-release-on-logout), so logging out cannot bypass the
   // death loop. See the addPlayer ghost block + src/sim/spirit.ts.
   dead?: boolean;
+  // The abyss expedition bag (JSONB; optional, written only while something is at
+  // stake or waiting on a corpse): the finds not yet carried out of the pit, and
+  // the bag a death left on the body. See src/sim/abyss/expedition_bag.ts.
+  expeditionBag?: SavedExpeditionBag;
   // The Keeper's Toll (Resurrection Sickness) remaining seconds (JSONB; optional/null when
   // none). Persisted so the penalty cannot be shed by logging out and back in.
   resSickness?: number | null;

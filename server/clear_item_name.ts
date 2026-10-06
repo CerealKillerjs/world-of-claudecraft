@@ -227,6 +227,14 @@ export function stripLegendaryNames(state: CharacterState, target: ClearItemName
   for (const slot of state.vendorBuyback ?? []) {
     if (stripName(slot.instance)) cleared++;
   }
+  // The abyss expedition bag: a corpse bag waiting to be recovered, and the
+  // finds still at stake (src/sim/abyss/expedition_bag.ts).
+  for (const slot of state.expeditionBag?.corpse?.slots ?? []) {
+    if (stripName(slot.instance)) cleared++;
+  }
+  for (const find of state.expeditionBag?.found ?? []) {
+    if (stripName(find.instance)) cleared++;
+  }
   for (const instance of Object.values(state.equipmentInstance ?? {})) {
     if (stripName(instance)) cleared++;
   }

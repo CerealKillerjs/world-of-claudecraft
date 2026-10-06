@@ -1225,6 +1225,9 @@ const MONOLITHS: MonolithRow[] = [
     // (it gained an implicit reset on change). Exact count, zero slack.
     // Re-pinned to 11619 at the release/v0.44.4 base merge (PvP Resurrect,
     // PR 4318, adds its lines): exact count on the MERGED tree. Zero slack.
+    // Held at 11619 for the abyss expedition bag: its wiring lines
+    // (src/sim/abyss/expedition_bag.ts) paid for by moving the Ice Block
+    // crowd-control predicates to src/sim/combat/cc.ts. Exact count, no growth.
     ceiling: 11619,
     seam: 'a sim system module behind SimContext (src/sim/CLAUDE.md)',
   },

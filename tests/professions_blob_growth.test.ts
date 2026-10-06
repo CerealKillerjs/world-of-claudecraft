@@ -191,6 +191,9 @@ const NON_PROFESSIONS_BLOB_FIELDS = [
   'dead',
   'ghost',
   'corpsePos',
+  // The abyss expedition bag (src/sim/abyss/expedition_bag.ts): finds at
+  // stake and a corpse's waiting bag, written only while non-empty.
+  'expeditionBag',
   'resSickness',
   'unstuckSickness',
   'equipment',

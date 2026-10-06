@@ -80,7 +80,6 @@ import {
 } from './game/discord_login_choice';
 import { desktopPresenceOnFrame } from './game/discord_presence';
 import { cycleHudFocus } from './game/dpad_focus_nav';
-import { takeEditorPlaytestRequest } from './game/editor_playtest';
 import {
   clearEntryProbe,
   ENTRY_PROBE_STABLE_MS,
@@ -250,6 +249,7 @@ import { voice } from './game/voice';
 import { openHeaderWiki } from './game/website_navigation';
 import { createWebsiteViewNavigation } from './game/website_view_navigation';
 import { attachWocMarketExchange } from './game/woc_market_wiring';
+import { takeBootWorldRequest } from './game/world_pack_boot';
 import { telemetryZoneId } from './game/world_telemetry';
 import { zoneWarmupMode } from './game/zone_transition';
 import { createZoneWarmTracker } from './game/zone_warm_tracker';
@@ -10964,7 +10964,7 @@ function fadeOutHomepageMusic(durationMs = 1600): void {
 // Editor play-test handoff: if the map editor stored a custom world and sent us
 // here, boot straight into that offline world and skip the start screen. Any
 // malformed/absent request falls through to the normal home flow.
-const editorPlaytest = takeEditorPlaytestRequest();
+const editorPlaytest = takeBootWorldRequest();
 const startupParams = new URLSearchParams(location.search);
 const diagnosticsAutoOffline =
   import.meta.env.DEV &&

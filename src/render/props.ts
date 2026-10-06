@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { GLTF } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { isRimholtBuilding } from '../sim/abyss';
 import { buildingCameraHeight } from '../sim/building_layout';
 import { mineMoundFootprint, STALL_HALF_D, STALL_HALF_W } from '../sim/colliders';
 import { MOUNT_RACE_JUMP_FIXTURES } from '../sim/content/mounts';
@@ -65,6 +66,7 @@ import {
   updatePropCullables,
 } from './prop_cull_core';
 import type { RevealGateCore } from './reveal_gate_core';
+import { buildRimholtBuildings, rimholtBuildingsPrewarmParts } from './rimholt_buildings';
 import { shipWakePrewarmParts } from './ship_wake';
 import { mergeBandDepth, mergeStaticMeshes, normalizedStaticGeometry } from './static_merge';
 import { buildScheduledShips, type FerryViewSource } from './transport_ferry_ships';
@@ -1031,14 +1033,16 @@ export function buildPropMaterialPrewarmGroup(): THREE.Group {
   // moored transport ships draw their own merged, vertex-coloured meshes
   // (transport_ship.ts), and so do the berths' route markers
   // (harbor_route_markers.ts), the Wyrmwatch cliff harbor (wyrmwatch_harbor.ts), the
-  // Wickharbor ferry wharf (wickharbor_wharf.ts) and the rest of Wickharbor's harbor
-  // (wickharbor_harbor.ts): one twin per distinct program, shadow variant included
+  // Wickharbor ferry wharf (wickharbor_wharf.ts), the rest of Wickharbor's harbor
+  // (wickharbor_harbor.ts) and the abyss world's city houses (rimholt_buildings.ts):
+  // one twin per distinct program, shadow variant included
   for (const part of [
     ...transportShipPrewarmParts(),
     ...harborRouteMarkerPrewarmParts(),
     ...wyrmwatchHarborPrewarmParts(),
     ...wickharborWharfPrewarmParts(),
     ...wickharborHarborPrewarmParts(),
+    ...rimholtBuildingsPrewarmParts(),
   ]) {
     const mesh = new THREE.Mesh(part.geometry, part.material);
     mesh.castShadow = true;
@@ -1620,7 +1624,15 @@ export function buildProps(
   // World-scale, front-on-+z models: place at scale 1, orient with rot alone.
   // r > 0 entries mirror the circle collider in colliders.ts and camera-ghost;
   // r 0 dressing stays always-visible (small silhouettes, nothing to hide).
-  for (const d of getActiveWorldContent().props.decorProps ?? []) {
+  const decorRows = getActiveWorldContent().props.decorProps ?? [];
+  // the abyss world's procedural city houses (render/rimholt_buildings.ts):
+  // already merged per cell, so kept out of the static merge; left off the fog
+  // cull so the tiers read across the whole city (frustum culling per cell)
+  const rimholtHouses = buildRimholtBuildings(decorRows, ground);
+  for (const cell of rimholtHouses.children) keepFromMerge.add(cell);
+  group.add(rimholtHouses);
+  for (const d of decorRows) {
+    if (isRimholtBuilding(d.key)) continue;
     if (isTransportShipKey(d.key)) {
       const ship = buildTransportShipView({
         key: d.key,

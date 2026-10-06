@@ -27,6 +27,8 @@ import { forgefatherIsleRockWeight } from '../sim/content/ember_coast';
 import {
   COLUMN_ZONES,
   columnBlendAt,
+  getActiveWorldContent,
+  getContentGeneration,
   STRIP_ZONES,
   WORLD_MAX_X,
   WORLD_MAX_Z,
@@ -34,7 +36,14 @@ import {
   ZONES,
 } from '../sim/data';
 import { fbm2 } from '../sim/rng';
+import type { BiomeId, WorldTerrainModel } from '../sim/types';
 import { roadDistance, WATER_LEVEL, zoneBiomeAt } from '../sim/world';
+import {
+  groundSurfacePaintInto,
+  makeGroundSurfacePaint,
+  SURFACE_GRASS_TINT_WEIGHT,
+  surfaceGrassTint,
+} from './ground_surface_core';
 import { impactCraterTerrainBlend } from './impact_terrain';
 import { clamp01 } from './num_clamp';
 import { makeShoreProbe, type ShoreProbe, shoreWaterGate } from './shore_water_gate_core';
@@ -92,7 +101,37 @@ const zonePalettes = ZONES.map((zn) => {
   };
 });
 
+// A code-built world (WorldContent.terrainModel) is not laid out in the
+// built-in world's zone strips, so its palette comes straight from the biome
+// its own model reports at the point. Built once per biome, on first use.
+type ColorPalette = (typeof zonePalettes)[number];
+const biomePalettes = new Map<BiomeId, ColorPalette>();
+function biomePalette(biome: BiomeId): ColorPalette {
+  let p = biomePalettes.get(biome);
+  if (!p) {
+    const hex = BIOME_PALETTE[biome];
+    p = {
+      grass: new THREE.Color(hex.grass),
+      grassDark: new THREE.Color(hex.grassDark),
+      grassYellow: new THREE.Color(hex.grassYellow),
+      dirt: new THREE.Color(hex.dirt),
+      sand: new THREE.Color(hex.sand),
+    };
+    biomePalettes.set(biome, p);
+  }
+  return p;
+}
+
 function paletteAt(x: number, z: number): void {
+  if (getActiveWorldContent().terrainModel) {
+    const p = biomePalette(zoneBiomeAt(x, z));
+    grassC.copy(p.grass);
+    grassDarkC.copy(p.grassDark);
+    grassYellowC.copy(p.grassYellow);
+    dirtC.copy(p.dirt);
+    sandC.copy(p.sand);
+    return;
+  }
   const stripPalette = (zn: (typeof ZONES)[number]) =>
     zonePalettes[ZONES.indexOf(zn)] ?? zonePalettes[0];
   grassC.copy(stripPalette(STRIP_ZONES[0]).grass);
@@ -170,8 +209,16 @@ export function groundGrassColorAt(
   out.copy(grassC).lerp(grassDarkC, v);
   const v2 = fbm2(x * 0.16, z * 0.16, seed + 59, 2);
   out.lerp(grassYellowC, v2 * 0.35);
+  // a built world's tended grass (a city garden) grows its own green, so the
+  // blades match the plot the chunk paint lays under them
+  const surfaceAt = getActiveWorldContent().terrainModel?.surfaceAt;
+  if (surfaceAt) {
+    const tint = surfaceGrassTint(surfaceAt(x, z));
+    if (tint !== null) out.lerp(gardenGrassC.setHex(tint), SURFACE_GRASS_TINT_WEIGHT);
+  }
   return out;
 }
+const gardenGrassC = new THREE.Color();
 
 // The dark-patch weight of the grass palette (0 = yellowed open ground,
 // 1 = deep lush green), exposed so grass PLACEMENT can follow the same
@@ -208,15 +255,50 @@ function ensureHeightRow(state: ChunkGeometryBuildState, hcj: number): void {
 // position alone. The sampler is this tier's OWN meshTerrainHeight, not raw
 // terrainHeight, so the gate probes the same surface the vertices sit on
 // (castle-pad corrections included) and the two can never disagree.
+//
+// A code-built world may hold dry ground below the waterline (the abyss
+// world's pit): its probe reports such ground as dry, so neither the pit floor
+// nor a wall above it reads as a beach. Keyed on the content generation too,
+// since a world swap changes the heightfield under the same seed.
 let shoreProbeSeed = Number.NaN;
+let shoreProbeGeneration = -1;
 let shoreProbe = makeShoreProbe(() => 0);
 function shoreProbeFor(seed: number): ShoreProbe {
-  if (seed !== shoreProbeSeed) {
+  const generation = getContentGeneration();
+  if (seed !== shoreProbeSeed || generation !== shoreProbeGeneration) {
     shoreProbeSeed = seed;
-    shoreProbe = makeShoreProbe((x, z) => meshTerrainHeight(x, z, seed));
+    shoreProbeGeneration = generation;
+    const model = getActiveWorldContent().terrainModel;
+    shoreProbe = makeShoreProbe(
+      model
+        ? (x, z) => {
+            const h = meshTerrainHeight(x, z, seed);
+            return h < WATER_LEVEL && !model.isOpenSea(x, z, seed, WATER_LEVEL)
+              ? WATER_LEVEL + 10
+              : h;
+          }
+        : (x, z) => meshTerrainHeight(x, z, seed),
+    );
   }
   return shoreProbe;
 }
+
+// The beach gate for one vertex: the shared probe, plus (in a code-built
+// world) no beach at all on ground below the waterline that is not sea.
+function shoreGateAt(
+  x: number,
+  z: number,
+  h: number,
+  seed: number,
+  model: WorldTerrainModel | undefined,
+): number {
+  if (model && h < WATER_LEVEL && !model.isOpenSea(x, z, seed, WATER_LEVEL)) return 0;
+  return shoreWaterGate(x, z, h, WATER_LEVEL, shoreProbeFor(seed));
+}
+
+// Scratch for the built-surface paint (hot loop, no allocation).
+const surfacePaint = makeGroundSurfacePaint();
+const surfaceC = new THREE.Color();
 
 function sampleVertex(state: ChunkGeometryBuildState, ci: number, cj: number): VertexSample {
   const { nx, x0, z0, stepX, stepZ, seed, lowShade } = state;
@@ -248,6 +330,8 @@ function sampleVertex(state: ChunkGeometryBuildState, ci: number, cj: number): V
 
   paletteAt(x, z);
   const biome = zoneBiomeAt(x, z);
+  // a code-built world's own ground model (null for the built-in world)
+  const model = getActiveWorldContent().terrainModel;
   const w: [number, number, number, number] = [1, 0, 0, 0];
   const impact = impactCraterTerrainBlend(x, z);
 
@@ -317,7 +401,7 @@ function sampleVertex(state: ChunkGeometryBuildState, ci: number, cj: number): V
   // Run basin) reads as plain ground instead of a pale coast.
   const wl = WATER_LEVEL;
   let shore = clamp01((wl + 1.6 - h) / 1.6);
-  if (shore > 0) shore *= shoreWaterGate(x, z, h, wl, shoreProbeFor(seed));
+  if (shore > 0) shore *= shoreGateAt(x, z, h, seed, model);
   if (biome === 'marsh') {
     cTmp.lerp(dirtDarkC, shore);
     lerpSplat(w, 1, shore);
@@ -344,7 +428,7 @@ function sampleVertex(state: ChunkGeometryBuildState, ci: number, cj: number): V
   // waterline, under the quay pad's working grade.
   if (biome === 'vale') {
     let strand = clamp01((wl + 2.5 - h) / 1.3);
-    if (strand > 0) strand *= shoreWaterGate(x, z, h, wl, shoreProbeFor(seed));
+    if (strand > 0) strand *= shoreGateAt(x, z, h, seed, model);
     if (strand > 0) {
       cTmp.lerp(sandC, Math.min(1, strand));
       lerpSplat(w, 3, Math.min(1, strand));
@@ -470,7 +554,9 @@ function sampleVertex(state: ChunkGeometryBuildState, ci: number, cj: number): V
   // The high-rock altitude band's onset wanders with the streak noise (a
   // dithered elevation band, not a striped cutoff), and the stone above it
   // takes the same warm strata as the slope rock so summits read layered.
-  const highH = 22 + (rockStreak - 0.5) * 7;
+  // (a code-built world's heights are its own: its uplands are not the
+  // built-in world's rocky, snow-capped crowns, so the band stays off there)
+  const highH = model ? Number.POSITIVE_INFINITY : 22 + (rockStreak - 0.5) * 7;
   if (h > highH) {
     const rockT = clamp01((h - highH) / 10) * (0.6 + rockStreak * 0.25);
     rockTintW = Math.max(rockTintW, rockT);
@@ -502,11 +588,10 @@ function sampleVertex(state: ChunkGeometryBuildState, ci: number, cj: number): V
   // kicks in well before the wall itself (edge starts negative deep inland)
   // so from a zone's centre the rim reads as atmospheric haze rather than a
   // crisp silhouette, reinforcing the reduced BIOME_FOG draw distance.
-  const edge = Math.max(
-    Math.abs(x) - (WORLD_MAX_X - 70),
-    WORLD_MIN_Z + 70 - z,
-    z - (WORLD_MAX_Z - 70),
-  );
+  // A code-built world has no such rim: those bounds are the built-in map's.
+  const edge = model
+    ? Number.NEGATIVE_INFINITY
+    : Math.max(Math.abs(x) - (WORLD_MAX_X - 70), WORLD_MIN_Z + 70 - z, z - (WORLD_MAX_Z - 70));
   const rim = clamp01(edge / 64);
   if (rim > 0) {
     cTmp.lerp(hazyPeakC, rim * 0.95);
@@ -518,6 +603,15 @@ function sampleVertex(state: ChunkGeometryBuildState, ci: number, cj: number): V
     snow = Math.max(snow, rimSnow);
     lerpSplat(w, 2, rim * 0.85);
   }
+  // A built surface (city paving, a street, a wall face) goes on last, over
+  // every natural arm above, so stone is never re-greened, rocked or snowed.
+  const surface = model?.surfaceAt?.(x, z) ?? null;
+  if (surface && groundSurfacePaintInto(surface, x, z, h, surfacePaint)) {
+    cTmp.lerp(surfaceC.setHex(surfacePaint.tint), surfacePaint.tintWeight);
+    const sw = surfacePaint.splatWeight;
+    for (let i = 0; i < 4; i++) w[i] += (surfacePaint.splat[i] - w[i]) * sw;
+    snow *= 1 - sw;
+  }
   // Hill-scale tone drift: a very-low-frequency value swing so one region's
   // fields and faces sit a few percent lighter or darker than the next.
   // Applied over everything (grass, rock, snow alike) because real ground
@@ -525,8 +619,9 @@ function sampleVertex(state: ChunkGeometryBuildState, ci: number, cj: number): V
   // to never read as a patch, only as regions that feel different.
   const toneDrift = fbm2(x * 0.008, z * 0.008, seed + 97, 2);
   cTmp.multiplyScalar(0.95 + toneDrift * 0.1);
-  // mud rides the dirt layer wherever the marsh palette is active
-  const mud = marshWeightAt(x, z);
+  // mud rides the dirt layer wherever the marsh palette is active (the
+  // built-in strips; a code-built world has none)
+  const mud = model ? 0 : marshWeightAt(x, z);
   if (lowShade) {
     const ridge = clamp01((slope - 0.22) * 1.6);
     const lowland = clamp01((wl + 7 - h) / 12);

@@ -1,5 +1,5 @@
 import { authoredLettersById } from '../sim/content/letters';
-import { DELVES, DUNGEONS, MOBS, NPCS, QUESTS, ZONES } from '../sim/data';
+import { DELVES, DUNGEONS, MOBS, NAMED_ZONES, NPCS, QUESTS } from '../sim/data';
 
 // English world-entity names + narratives (mobs, NPCs, quests, zones, dungeons).
 //
@@ -673,6 +673,10 @@ const ZONE_IDS = [
   'galecrest',
   'farshore_isle',
   'proving_shore',
+  // the abyss world pack's named regions (src/sim/abyss/regions.ts)
+  'vaharra_isle',
+  'rimholt',
+  'the_sounding',
 ] as const;
 const DUNGEON_IDS = [
   'hollow_crypt',
@@ -854,7 +858,7 @@ function makeEnglishWorldEntities(): WorldEntityTranslations {
   });
 
   const zones = {} as ZoneTranslations;
-  ZONES.forEach((zone) => {
+  NAMED_ZONES.forEach((zone) => {
     const poiRecord = {} as Record<number, { label: string }>;
     zone.pois.forEach((poi, index) => {
       poiRecord[index] = { label: poi.label };

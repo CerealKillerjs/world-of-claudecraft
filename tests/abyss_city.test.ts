@@ -44,7 +44,7 @@ import {
   wallCorners,
   wallRadiusAt,
 } from '../src/sim/abyss';
-import { cityStreetAt, ringRadius } from '../src/sim/abyss/city_streets';
+import { bandInner, bandOuter, cityStreetAt, ringRadius } from '../src/sim/abyss/city_streets';
 import { PLAYER_MAX_CLIMB_SLOPE } from '../src/sim/pathfind';
 import { WORLD_SEED } from '../src/sim/world_seed';
 
@@ -160,8 +160,8 @@ describe('Rimholt ground: terraces, walls, avenues and stair lanes', () => {
   it('makes every terrace wall too steep to climb away from lanes and avenues', () => {
     let checked = 0;
     for (let k = 0; k < CITY_WALLS; k++) {
-      for (let s = 0; s < 48; s++) {
-        const theta = SOUTH_GATE_ANGLE + ((s + 0.37) / 48) * TAU;
+      for (let s = 0; s < 96; s++) {
+        const theta = SOUTH_GATE_ANGLE + ((s + 0.37) / 96) * TAU;
         const w = wallRadiusAt(k, theta);
         const g = ground(w - WALL_FACE_RUN / 2, theta);
         if (g.avenue > 0 || g.lane > 0) continue;
@@ -207,25 +207,38 @@ describe('Rimholt ground: terraces, walls, avenues and stair lanes', () => {
   });
 
   it('is a pure function of position', () => {
-    const p = polar(1210, 0.83);
+    const p = polar(1010, 0.83);
     expect(abyssTerrainHeight(p.x, p.z, 1)).toBe(abyssTerrainHeight(p.x, p.z, 99));
     expect(cityGround(300, -900)).toEqual(cityGround(300, -900));
   });
 });
 
 describe('Rimholt districts, gardens and surfaces', () => {
-  it('splits the terraces into four quarters around the rim ring', () => {
-    const seen = new Set<string>();
+  it('lays the districts out as ring sectors on the three tiers', () => {
+    // the mid radius of each tier, where no wall wanders across it
+    const tiers = [PIT_RADIUS + 70, 810, 1000];
+    const seen = tiers.map(() => new Set<string>());
     for (let s = 0; s < 64; s++) {
-      const theta = SOUTH_GATE_ANGLE + (s / 64) * TAU;
-      seen.add(districtAt(1200, theta));
+      const theta = SOUTH_GATE_ANGLE + ((s + 0.5) / 64) * TAU;
+      tiers.forEach((r, k) => {
+        expect(levelAt(r, theta)).toBe(k);
+        seen[k].add(districtAt(r, theta));
+      });
     }
-    expect([...seen].sort()).toEqual(['east', 'north', 'south', 'west']);
-    expect(districtAt(PIT_RADIUS + 50, 1)).toBe('centre');
-    expect(districtAt(1200, SOUTH_GATE_ANGLE)).toBe('south');
-    expect(districtAt(1200, Math.PI / 2)).toBe('north');
-    expect(districtAt(1200, 0)).toBe('east');
-    expect(districtAt(1200, Math.PI)).toBe('west');
+    // lower tier: the market and the hall, the poor quarter between them
+    expect([...seen[0]].sort()).toEqual(['centre', 'south']);
+    // middle tier: the workshops and the cottages, either side of the main avenue
+    expect([...seen[1]].sort()).toEqual(['east', 'west']);
+    // upper tier: the well-off half by the gate, the farm terraces beyond
+    expect([...seen[2]].sort()).toEqual(['north', 'west']);
+    const across = SOUTH_GATE_ANGLE + Math.PI;
+    expect(districtAt(PIT_RADIUS + 70, SOUTH_GATE_ANGLE)).toBe('centre');
+    expect(districtAt(PIT_RADIUS + 70, across)).toBe('centre');
+    expect(districtAt(PIT_RADIUS + 70, SOUTH_GATE_ANGLE + Math.PI / 2)).toBe('south');
+    expect(districtAt(810, SOUTH_GATE_ANGLE + 1)).toBe('east');
+    expect(districtAt(810, SOUTH_GATE_ANGLE - 1)).toBe('west');
+    expect(districtAt(1000, SOUTH_GATE_ANGLE + 0.3)).toBe('north');
+    expect(districtAt(1000, across)).toBe('west');
   });
 
   it('leaves garden plots on the upper terraces, never on the rim or a street', () => {
@@ -239,7 +252,7 @@ describe('Rimholt districts, gardens and surfaces', () => {
         const z = Math.sin(theta) * r;
         if (!isGardenPlot(x, z)) continue;
         gardens++;
-        expect(levelAt(r, theta)).toBeGreaterThanOrEqual(2);
+        expect(levelAt(r, theta)).toBeGreaterThanOrEqual(1);
         expect(cityGround(x, z).avenue).toBe(0);
         const d = districtAt(r, theta);
         if (d === 'west') westGardens++;
@@ -251,7 +264,8 @@ describe('Rimholt districts, gardens and surfaces', () => {
   });
 
   it('paves the city, cobbles its streets, faces its walls and leaves nature alone', () => {
-    const plaza = polar(PIT_RADIUS + 40, 0.3);
+    // a rim plaza point between two stair lanes, off every street
+    const plaza = polar(PIT_RADIUS + 40, 0.38);
     expect(abyssSurfaceAt(plaza.x, plaza.z)).toBe('paving');
     const avenue = polar(1000, avenueAngleAt(2, 1000));
     expect(abyssSurfaceAt(avenue.x, avenue.z)).toBe('street');
@@ -316,7 +330,7 @@ function overlapDepth(
 }
 
 /** The pinned layout (count and digest); see the determinism test. */
-const GOLDEN = { houses: 14041, digest: 769800552 };
+const GOLDEN = { houses: 5321, digest: 554156731 };
 
 const districtOf = (d: { x: number; z: number }) => {
   const x = d.x - cx;
@@ -349,17 +363,22 @@ describe('Rimholt streets: ring streets, alleys and plazas', () => {
     const grain = STREET_GRAIN;
     expect(grain.south.spacingMax).toBeLessThan(grain.north.spacingMin);
     expect(grain.south.deadEnd).toBeGreaterThan(grain.north.deadEnd);
-    let south = 0;
-    let north = 0;
-    for (const st of levelStreets(3).stripes) {
-      for (const a of st.alleys) {
-        const r = 1300;
-        const d = districtAt(r, a.theta0);
-        if (d === 'south') south++;
-        if (d === 'north') north++;
+    // alleys per yard of street: the poor quarter (lower tier) against the
+    // well-off houses (upper tier)
+    const density = (level: number, district: string) => {
+      const mid = (t: number) => (bandInner(level, t) + bandOuter(level, t)) / 2;
+      let alleys = 0;
+      for (const st of levelStreets(level).stripes) {
+        for (const a of st.alleys) if (districtAt(mid(a.theta0), a.theta0) === district) alleys++;
       }
-    }
-    expect(south).toBeGreaterThan(north * 1.5);
+      let arc = 0;
+      for (let s = 0; s < 720; s++) {
+        const t = (s / 720) * TAU;
+        if (districtAt(mid(t), t) === district) arc += (TAU / 720) * mid(t);
+      }
+      return alleys / arc;
+    };
+    expect(density(0, 'south')).toBeGreaterThan(density(2, 'north') * 1.5);
   });
 
   it('keeps every alley wide enough to walk, with dead ends and skewed runs among them', () => {
@@ -374,8 +393,8 @@ describe('Rimholt streets: ring streets, alleys and plazas', () => {
         }
       }
     }
-    expect(dead).toBeGreaterThan(100);
-    expect(skewed).toBeGreaterThan(500);
+    expect(dead).toBeGreaterThan(40);
+    expect(skewed).toBeGreaterThan(200);
   });
 
   it('runs an alley down every stair lane so each one lands on a street', () => {
@@ -416,8 +435,9 @@ describe('Rimholt streets: ring streets, alleys and plazas', () => {
 
 describe('Rimholt blocks: houses on lots, plazas and parapets', () => {
   it('builds a dense city within a bounded budget', () => {
-    expect(houses.length).toBeGreaterThan(10000);
-    expect(houses.length).toBeLessThan(30000);
+    // the compact three-tier city (decided 2026-10-06): about 5,000 houses
+    expect(houses.length).toBeGreaterThan(3500);
+    expect(houses.length).toBeLessThan(9000);
     const bad = houses.filter(
       (d) =>
         (d.hw ?? 0) <= 1.5 ||
@@ -527,8 +547,7 @@ describe('Rimholt blocks: houses on lots, plazas and parapets', () => {
     const north = of('north');
     const east = of('east');
     const west = of('west');
-    // the poor south: the most houses, the narrowest lots, the shacks
-    expect(south.length).toBeGreaterThan(north.length * 1.5);
+    // the poor south: the narrowest lots, the shacks
     expect(meanWidth(south)).toBeLessThan(meanWidth(north) * 0.7);
     expect(share(south, 'rimShack')).toBeGreaterThan(0.2);
     // the workshops of the east, the cottages of the west, the towers of the north

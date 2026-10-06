@@ -1,6 +1,6 @@
 # La Sima: diseño del mundo inspirado en un abismo vertical
 
-Estado: propuesta. Escala 1:1 y ciudad de 3 km decididas; el resto en "Decisiones" al final.
+Estado: propuesta. Escala 1:1 y ciudad de 2 km en tres gradas decididas; el resto en "Decisiones" al final.
 Alcance: este documento define el mundo jugable, su escala y cómo encaja en el motor
 de World of ClaudeCraft. No cambia código. Todos los nombres propios de este documento
 son **nombres de trabajo** y pasan el control de originalidad antes de usarse en el juego.
@@ -88,11 +88,15 @@ Precisión numérica: posiciones en torno a 22.000 yd tienen un error de float32
 ```
 
 - **Pozo**: círculo de 547 yd de radio en el centro de la isla. 1:1 con la obra.
-- **Anillo del borde** (distrito centro): de 547 a 750 yd del centro. Andamios, poleas,
-  ascensores de carga, la sede del gremio de exploradores y el mercado de hallazgos.
-- **Cuatro distritos** (N, S, E, O): de 750 a 1.640 yd del centro (ciudad de 3 km de
-  diámetro, decidido el 2026-10-05; la obra no da la cifra). Barrios, escuela-orfanato de aprendices, talleres,
-  puerto al sur.
+- **Tres gradas** hasta 1.094 yd del centro (ciudad de unos 2 km de diámetro, decidido el
+  2026-10-06 a partir del plano de referencia de Daniel; antes eran 3 km). Los barrios van en
+  sectores de anillo:
+  - **Grada inferior** (el borde, de 547 a unos 720 yd): andamios, ascensores, mercado y sede
+    del gremio de exploradores; entre ellos, el arrabal pegado al pozo.
+  - **Grada media**: talleres a un lado de la avenida principal, casitas y huertos al otro.
+  - **Grada superior**: casas acomodadas en la mitad de la puerta y bancales de cultivo en la
+    mitad opuesta.
+  - Fuera de la ciudad quedan la escuela-orfanato de aprendices y el puerto al sur.
 - **Isla**: radio de unos 2.700 yd (estimación), con costa, campos y faro. Puerto
   conectado con las rutas de barco que el motor ya tiene (`transport_ship.ts`).
 - Tiempos a 7 yd/s: rodear el borde, unos 8 min; del puerto al borde, unos 3 min.
@@ -253,7 +257,8 @@ Ninguno se usa en contenido hasta pasar la verificación de la sección 1.
 Tomadas (2026-10-05):
 
 - Escala vertical 1:1 en todas las capas, sin compresión.
-- Ciudad de 3 km de diámetro alrededor de la abertura de 1 km.
+- Ciudad de unos 2 km de diámetro en tres gradas alrededor de la abertura de 1 km (2026-10-06;
+  sustituye a la de 3 km del 2026-10-05).
 - Se sube siempre a pie, pagando el Peso; existe un objeto raro de regreso como excepción.
 - Morir dentro del pozo deja la bolsa de expedición en el cadáver; al principio no se
   pierde nada más (sección 4.5).

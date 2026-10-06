@@ -52,7 +52,8 @@ const polar = (r: number, theta: number) => ({
 describe('terrain paint on the abyss world', () => {
   it('paves the rim plaza and cobbles the avenues', () => {
     setActiveWorldContent(abyssWorld());
-    const plaza = polar(PIT_RADIUS + 40, 0.3);
+    // a rim plaza point between two stair lanes, off every street
+    const plaza = polar(PIT_RADIUS + 40, 0.38);
     const p = vertexAt(plaza.x, plaza.z);
     expect(p.splat[0]).toBeLessThan(0.05); // no grass
     expect(p.splat[3]).toBeGreaterThan(0.5); // pale sand-stone paving

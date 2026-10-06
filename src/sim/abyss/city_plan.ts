@@ -51,25 +51,19 @@ function smooth(t: number): number {
 /** Number of retaining walls from the rim plaza up to the city's outer edge.
  *  Wall k (0-based) holds up level k + 1; level 0 is the rim plaza, and the
  *  last wall is the city's edge, where the island's farmland begins on top. */
-export const CITY_WALLS = 6;
-/** Mean radius of each wall. The spacing is deliberately uneven: some terraces
- *  are deep, some narrow, as a town that grew in stages would have them. */
-const WALL_MEAN_RADIUS: readonly number[] = [
-  RIM_OUTER_RADIUS,
-  968,
-  1146,
-  1302,
-  1486,
-  CITY_OUTER_RADIUS - 12,
-];
+export const CITY_WALLS = 3;
+/** Mean radius of each wall: three tiers, as in the owner's reference plan
+ *  (the lower tier on the rim, the middle tier, the upper tier). The spacing
+ *  is deliberately uneven, as a town that grew in stages would have it. */
+const WALL_MEAN_RADIUS: readonly number[] = [RIM_OUTER_RADIUS, 905, CITY_OUTER_RADIUS - 12];
 /** How far a corner may sit from its wall's mean radius, inward or outward
  *  (the outer wall stays inside the city's edge). */
-const CORNER_JITTER: readonly number[] = [20, 28, 30, 28, 30, 8];
+const CORNER_JITTER: readonly number[] = [20, 28, 8];
 /** Height each wall lifts the ground by, in total (sums to the city's climb).
  *  Tall enough that the terraces read as tiers of roofs stacked up from the
  *  rim, the way the reference town climbs, rather than a flat paved plain:
- *  three to five storeys a wall, about 80 yards over the whole city. */
-export const WALL_RISE: readonly number[] = [15, 13, 16, 12, 14, 11];
+ *  about five storeys a wall (the most a stair lane's run stays walkable on). */
+export const WALL_RISE: readonly number[] = [16, 15, 14];
 /** Length range of one straight run of wall, corner to corner (yards). */
 const RUN_MIN = 60;
 const RUN_MAX = 170;
@@ -401,32 +395,55 @@ export function cityGroundHeight(x: number, z: number): number {
 // Districts and gardens
 // ---------------------------------------------------------------------------
 
-/** The five districts: the rim ring, then four quarters split by avenues. */
+/** The five district styles. They are laid out as ring sectors on the three
+ *  tiers, after the owner's reference plan (2026-10-06), reading the south
+ *  gate (the main way in, where the descent begins) as the plan's gate:
+ *
+ * - lower tier (the rim plaza): the market and landings around the gate and
+ *   the explorers' hall across the pit are 'centre'; between them, the poor
+ *   quarter crowded against the pit is 'south'.
+ * - middle tier: the workshops on one side of the main avenue ('east'), the
+ *   cottages and orchards on the other ('west').
+ * - upper tier: the well-off houses on the gate's half ('north'), the farm
+ *   terraces on the far half ('west').
+ *
+ * Every border runs along an avenue or a terrace wall, so no block is split. */
 export type CityDistrict = 'centre' | 'north' | 'east' | 'south' | 'west';
 
-/** District of a local point. The quarters are split by the avenues nearest
- *  the diagonals, so every border runs along a street. */
+/** District of a local point. */
 export function districtAt(r: number, theta: number): CityDistrict {
-  if (levelAt(r, theta) === 0) return 'centre';
+  const level = levelAt(r, theta);
   const t = fromGate(theta);
   const border = (n: number) => fromGate(avenueAngleAt(n, r));
-  if (t < border(1) || t >= border(7)) return 'south';
-  if (t < border(3)) return 'east';
-  if (t < border(5)) return 'north';
-  return 'west';
+  if (level === 0) {
+    const gate = t < border(1) || t >= border(7);
+    const hall = t >= border(3) && t < border(5);
+    return gate || hall ? 'centre' : 'south';
+  }
+  if (level === 1) return t < border(SOUTH_AVENUE + 4) ? 'east' : 'west';
+  return t < border(2) || t >= border(6) ? 'north' : 'west';
 }
 
 /** Gardens and orchards: whole plots left green, more of them toward the
- *  outskirts and in the west, fewer in the crowded south, none on the rim
- *  plaza, a street, or a wall. */
+ *  outskirts and among the cottages and farm terraces, fewer in the crowded
+ *  quarters, none on the rim plaza, a street, or a wall. */
 export function isGardenPlot(x: number, z: number): boolean {
   const r = Math.hypot(x, z);
   const theta = Math.atan2(z, x);
   const level = levelAt(r, theta);
-  if (level < 2 || level >= CITY_WALLS) return false;
+  if (level < 1 || level >= CITY_WALLS) return false;
   if (avenueWeight(x, z) > 0) return false;
   const district = districtAt(r, theta);
-  const bias =
-    district === 'west' ? -0.06 : district === 'south' ? 0.08 : district === 'east' ? 0.05 : 0;
+  // the upper tier's far half is the farm terraces: mostly green
+  const farm = district === 'west' && level === CITY_WALLS - 1;
+  const bias = farm
+    ? -0.14
+    : district === 'west'
+      ? -0.06
+      : district === 'south'
+        ? 0.08
+        : district === 'east'
+          ? 0.05
+          : 0;
   return fbm2(x * 0.011, z * 0.011, SALT, 3) > 0.64 - level * 0.025 + bias;
 }

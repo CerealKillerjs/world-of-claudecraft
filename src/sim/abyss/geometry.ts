@@ -5,7 +5,8 @@
 // read one set of numbers. The design source is
 // docs/design/abyss-world.md (sections 2 and 4): the pit and the layer depths
 // are 1:1 with the reference work (metres converted to engine yards), the city
-// and island sizes are our own estimates (decided 2026-10-05: a 3 km city).
+// and island sizes are our own estimates (decided 2026-10-06: a compact city
+// about 2 km across, three terraces, after the owner's reference plan).
 //
 // Coordinates: every radius here is measured from the pit's axis, ABYSS_CENTER.
 // The island sits well south of the built-in world's rectangle so the two
@@ -32,12 +33,12 @@ export const ABYSS_CENTER = { x: 0, z: -4200 } as const;
 
 /** Radius of the pit's mouth: a ~1,000 m wide opening (1,094 yd across). */
 export const PIT_RADIUS = 547;
-/** Mean outer edge of the rim plaza (the central district: lifts, the
- *  explorers' hall, the market), where the first terrace wall rises. The wall
+/** Mean outer edge of the rim plaza (the lower tier: lifts, the explorers'
+ *  hall, the market, and the poor quarter), where the first terrace wall rises. The wall
  *  itself wanders a little either side (city_plan.ts). */
-export const RIM_OUTER_RADIUS = 820;
-/** Outer edge of the city: 3 km across (1,640 yd radius). */
-export const CITY_OUTER_RADIUS = 1640;
+export const RIM_OUTER_RADIUS = 720;
+/** Outer edge of the city: about 2 km across (1,000 m, 1,094 yd radius). */
+export const CITY_OUTER_RADIUS = 1094;
 /** Where the island's farmland meets the beach. */
 export const ISLAND_RADIUS = 2700;
 /** Where the beach shelf has fallen to open sea floor. */

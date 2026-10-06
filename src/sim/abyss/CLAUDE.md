@@ -65,6 +65,9 @@ world stays the default and is untouched). Design source:
   (2026-10-06): walls of straight runs at uneven corners, not circles;
   streets that meander, not rings; avenues that bend, not spokes; every
   district its own grain. Keep that when extending it.
+- Size and layout follow the owner's reference plan (2026-10-06): the pit
+  stays 1 km across, the city is about 2 km across in three tiers, and the
+  districts are ring sectors per tier (`districtAt`).
 - Tests: `tests/abyss_world.test.ts` (scale, pit, regions, boot),
   `tests/abyss_city.test.ts` (plan, ground, streets, blocks),
   `tests/rimholt_buildings_core.test.ts` (the house triangles), `tests/abyss_terrain_paint.test.ts`

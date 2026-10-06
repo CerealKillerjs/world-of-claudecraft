@@ -24,6 +24,7 @@ import type {
 import type { GroundAimPointXZ } from '../world_api/combat';
 import { abilityNeedsLineOfSight } from './ability_line_of_sight';
 import * as expeditionBagMod from './abyss/expedition_bag';
+import { saveExpeditionBag } from './abyss/expedition_bag';
 import { offlineActionBarRestore } from './action_bar_restore';
 import { maybeAutoEquip } from './auto_equip';
 import * as bagsMod from './bags';
@@ -3894,7 +3895,7 @@ export class Sim {
       // Death state: a released spirit resumes its corpse run on relog, and a
       // dead-but-unreleased corpse auto-releases on load (see addPlayer).
       dead: e.dead,
-      ...expeditionBagMod.saveExpeditionBag(meta),
+      ...saveExpeditionBag(meta),
       ghost: e.ghost,
       corpsePos: e.corpsePos ? { x: e.corpsePos.x, z: e.corpsePos.z } : null,
       // The Keeper's Toll persists across logout (it cannot be shed by relogging).

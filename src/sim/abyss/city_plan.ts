@@ -426,6 +426,7 @@ export function isGardenPlot(x: number, z: number): boolean {
   if (level < 2 || level >= CITY_WALLS) return false;
   if (avenueWeight(x, z) > 0) return false;
   const district = districtAt(r, theta);
-  const bias = district === 'west' ? -0.06 : district === 'south' ? 0.08 : 0;
+  const bias =
+    district === 'west' ? -0.06 : district === 'south' ? 0.08 : district === 'east' ? 0.05 : 0;
   return fbm2(x * 0.011, z * 0.011, SALT, 3) > 0.64 - level * 0.025 + bias;
 }

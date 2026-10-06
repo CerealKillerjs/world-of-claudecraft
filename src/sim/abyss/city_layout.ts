@@ -18,14 +18,9 @@
 
 import { hash2 } from '../rng';
 import type { CampDef, MailboxDef, ZonePropsDef } from '../types';
-import {
-  cityBlockProps,
-  cityParapets,
-  cityPlazas,
-  cityRingStreets,
-  RIM_RING_RADIUS,
-} from './city_blocks';
+import { cityBlockProps, cityParapets, cityPlazas, cityRingStreets } from './city_blocks';
 import { avenueAngleAt, CITY_AVENUE_COUNT, NORTH_AVENUE } from './city_plan';
+import { RIM_RING_RADIUS } from './city_streets';
 import { ABYSS_CENTER, ISLAND_RADIUS, PIT_RADIUS } from './geometry';
 import { LAYER1_CAMP_CENTER, RIM_GRAVEYARD } from './regions';
 import {

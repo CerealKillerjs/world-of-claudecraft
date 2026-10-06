@@ -3,6 +3,7 @@
 // layout with the street plan and ground surfaces under it. Consumers outside
 // this directory import from here, never from a module file. See ./CLAUDE.md.
 
+export * from './city_buildings';
 export {
   ABYSS_CAMPS,
   ABYSS_MAILBOXES,
@@ -10,6 +11,13 @@ export {
   buildAbyssProps,
 } from './city_layout';
 export * from './city_plan';
+export {
+  cityStreetAt,
+  levelBlocks,
+  levelStreets,
+  RIM_RING_RADIUS,
+  STREET_GRAIN,
+} from './city_streets';
 export * from './geometry';
 export * from './regions';
 export { abyssSurfaceAt } from './surface';

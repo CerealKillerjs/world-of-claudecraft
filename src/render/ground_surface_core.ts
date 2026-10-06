@@ -114,7 +114,7 @@ export function groundSurfacePaintInto(
     case 'street': {
       const c = cellHash(x, z, COBBLE_CELL, 2);
       const tint = c < 0.33 ? COBBLE_DARK : c < 0.6 ? COBBLE_PALE : COBBLE;
-      return set(out, tint, 0.92, 0, 0.1, 0.65, 0.25);
+      return set(out, tint, 0.92, 0, 0.13, 0.52, 0.35);
     }
     case 'masonry': {
       // courses run level; blocks in alternate courses are offset by half

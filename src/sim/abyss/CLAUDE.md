@@ -23,9 +23,20 @@ world stays the default and is untouched). Design source:
   `wallCorners`), the bending avenues, the stair lanes through each wall,
   the five districts, and the garden plots. `cityGround` is the one height
   and surface read the terrain, the layout and the paint all share.
-- `city_blocks.ts`: the built blocks on that plan: rows of houses that follow
-  the wall runs, district by district, garden pieces, plazas (wells and
-  stalls), the parapets on the wall tops, and the ring streets.
+- `city_streets.ts`: the street network inside each terrace: meandering
+  ring streets, cross alleys (district grain in `STREET_GRAIN`: spacing,
+  width, skew, dead ends), the stair lanes and avenues as forced alleys, the
+  blocks between through alleys, the plazas, and the paint query
+  `cityStreetAt`.
+- `city_blocks.ts`: the lots on that network: two rows of attached houses
+  back to back per block, district by district (`LOT_GRAIN`), courtyards,
+  orchard lots on the garden plots, plaza wells, stalls and trees, the
+  parapets on the wall tops, and the main ring streets as lit roads.
+- `city_buildings.ts`: the procedural building kinds (`rimHouse`, `rimTall`,
+  `rimTower`, `rimHall`, `rimWorkshop`, `rimShack`, `rimCottage`) and the
+  form each takes (`rimholtBuildingForm`: storeys, roof, chimney). The sim
+  reads it for the collider height; `src/render/rimholt_buildings_core.ts`
+  builds the same form, so drawn and collided shapes match.
 - `surface.ts`: what the ground is made of where it is built (paving, street,
   masonry, garden, earth), the pack's render-only `surfaceAt` hook; the
   painter is `src/render/ground_surface_core.ts`.
@@ -49,9 +60,12 @@ world stays the default and is untouched). Design source:
 - Every new player-visible name is IP-checked first (root CLAUDE.md); the
   current ones are recorded in `regions.ts`.
 - The city is meant to read as organic and a little irregular yet plainly
-  man-made (owner's brief, 2026-10-05): walls of straight runs at uneven
-  corners, not circles; rows that follow the walls, not rings; avenues that
-  bend, not spokes. Keep that when extending it.
+  man-made (owner's brief, 2026-10-05), dynamic and as unrepetitive as
+  possible, with alleys and plazas, and its districts clearly told apart
+  (2026-10-06): walls of straight runs at uneven corners, not circles;
+  streets that meander, not rings; avenues that bend, not spokes; every
+  district its own grain. Keep that when extending it.
 - Tests: `tests/abyss_world.test.ts` (scale, pit, regions, boot),
-  `tests/abyss_city.test.ts` (plan, ground, blocks), `tests/abyss_terrain_paint.test.ts`
+  `tests/abyss_city.test.ts` (plan, ground, streets, blocks),
+  `tests/rimholt_buildings_core.test.ts` (the house triangles), `tests/abyss_terrain_paint.test.ts`
   and `tests/ground_surface_core.test.ts` (the paint).

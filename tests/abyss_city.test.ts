@@ -10,6 +10,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ABYSS_CENTER,
+  ABYSS_PLAYER_START,
   abyssRoads,
   abyssSurfaceAt,
   abyssTerrainHeight,
@@ -24,19 +25,26 @@ import {
   cityGround,
   districtAt,
   isGardenPlot,
+  isRimholtBuilding,
+  LANE_HALF_WIDTH,
   LANE_RUN,
   laneAngles,
   levelAt,
+  levelBlocks,
+  levelStreets,
   nearestAvenue,
   PIT_RADIUS,
+  RIM_GRAVEYARD,
   RIM_HEIGHT,
   SOUTH_GATE_ANGLE,
+  STREET_GRAIN,
   WALL_FACE_RUN,
   WALL_FOOT,
   WALL_TOP,
   wallCorners,
   wallRadiusAt,
 } from '../src/sim/abyss';
+import { cityStreetAt, ringRadius } from '../src/sim/abyss/city_streets';
 import { PLAYER_MAX_CLIMB_SLOPE } from '../src/sim/pathfind';
 import { WORLD_SEED } from '../src/sim/world_seed';
 
@@ -68,13 +76,7 @@ function steepest(a: { x: number; z: number }, b: { x: number; z: number }, step
 }
 
 const PROPS = buildAbyssProps();
-const HOUSE_KEYS =
-  /^hex[rb]?(Home|Tavern|Tower|Church|Townhall|Workshop|Blacksmith|Market|Stables|Windmill)/;
-const houses = (PROPS.decorProps ?? []).filter((d) => {
-  if (!HOUSE_KEYS.test(d.key)) return false;
-  const r = Math.hypot(d.x - cx, d.z - cz);
-  return r > PIT_RADIUS + 120 && r < CITY_OUTER_RADIUS;
-});
+const houses = (PROPS.decorProps ?? []).filter((d) => isRimholtBuilding(d.key));
 
 describe('Rimholt plan: irregular terrace walls of straight runs', () => {
   it('wanders each wall around its ring instead of drawing a circle', () => {
@@ -269,61 +271,306 @@ describe('Rimholt districts, gardens and surfaces', () => {
   });
 });
 
-describe('Rimholt blocks: rows of houses, plazas and parapets', () => {
-  it('builds a dense city within a bounded prop budget', () => {
-    expect(houses.length).toBeGreaterThan(2500);
-    expect(houses.length).toBeLessThan(9000);
+/** A house's footprint corners (WORLD), three.js yaw (local +z the front). */
+function corners(d: { x: number; z: number; rot?: number; hw?: number; hd?: number }) {
+  const c = Math.cos(d.rot ?? 0);
+  const sn = Math.sin(d.rot ?? 0);
+  const hw = d.hw ?? 0;
+  const hd = d.hd ?? 0;
+  return [
+    [-hw, -hd],
+    [hw, -hd],
+    [hw, hd],
+    [-hw, hd],
+  ].map(([u, v]) => ({ x: d.x + u * c + v * sn, z: d.z - u * sn + v * c }));
+}
+
+const mid = (p: { x: number; z: number }, q: { x: number; z: number }) => ({
+  x: (p.x + q.x) / 2,
+  z: (p.z + q.z) / 2,
+});
+
+/** How far two yawed boxes interpenetrate (0 when apart), separating axes. */
+function overlapDepth(
+  a: { x: number; z: number; rot?: number; hw?: number; hd?: number },
+  b: { x: number; z: number; rot?: number; hw?: number; hd?: number },
+): number {
+  const axes = (r: number) => [
+    { x: Math.cos(r), z: -Math.sin(r) },
+    { x: Math.sin(r), z: Math.cos(r) },
+  ];
+  const extent = (o: typeof a, ax: { x: number; z: number }) => {
+    const [u, v] = axes(o.rot ?? 0);
+    return (
+      (o.hw ?? 0) * Math.abs(u.x * ax.x + u.z * ax.z) +
+      (o.hd ?? 0) * Math.abs(v.x * ax.x + v.z * ax.z)
+    );
+  };
+  let depth = Number.POSITIVE_INFINITY;
+  for (const ax of [...axes(a.rot ?? 0), ...axes(b.rot ?? 0)]) {
+    const d = extent(a, ax) + extent(b, ax) - Math.abs((b.x - a.x) * ax.x + (b.z - a.z) * ax.z);
+    if (d <= 0) return 0;
+    depth = Math.min(depth, d);
+  }
+  return depth;
+}
+
+/** The pinned layout (count and digest); see the determinism test. */
+const GOLDEN = { houses: 14041, digest: 769800552 };
+
+const districtOf = (d: { x: number; z: number }) => {
+  const x = d.x - cx;
+  const z = d.z - cz;
+  return districtAt(Math.hypot(x, z), Math.atan2(z, x));
+};
+
+describe('Rimholt streets: ring streets, alleys and plazas', () => {
+  it('splits every terrace with meandering ring streets that never cross', () => {
+    for (let level = 0; level < CITY_WALLS; level++) {
+      const { rings } = levelStreets(level);
+      expect(rings.length).toBeGreaterThanOrEqual(1);
+      for (let s = 0; s < 180; s++) {
+        const theta = SOUTH_GATE_ANGLE + (s / 180) * TAU;
+        let prev = 0;
+        for (const ring of rings) {
+          const r = ringRadius(ring, theta);
+          // in order, with a block's depth between them
+          expect(r - ring.halfWidth - prev).toBeGreaterThan(prev === 0 ? 0 : 8);
+          prev = r + ring.halfWidth;
+        }
+      }
+      // and they wander: not a constant offset from the walls
+      const ring = rings[0];
+      if (ring.fixedRadius === undefined) expect(ring.amp).toBeGreaterThan(1);
+    }
   });
 
-  it('keeps every house off the avenues, the wall faces and the lane ramps', () => {
-    for (const d of houses) {
-      const x = d.x - cx;
-      const z = d.z - cz;
-      const hit = nearestAvenue(x, z);
-      expect(hit.distance).toBeGreaterThan(avenueHalfWidth(hit.index) + (d.r ?? 0));
-      const g = cityGround(x, z);
-      expect(g.face).toBeLessThan(0.5);
-      // a lane's weight marks its whole bearing across the level, but only the
-      // last LANE_RUN yards before the wall behind are ramp
-      const r = Math.hypot(x, z);
-      const theta = Math.atan2(z, x);
-      const level = levelAt(r, theta);
-      if (g.lane > 0) {
-        expect(wallRadiusAt(level, theta) - r).toBeGreaterThan(LANE_RUN + (d.r ?? 0));
+  it('cuts the south into a tighter warren of alleys than the north', () => {
+    const grain = STREET_GRAIN;
+    expect(grain.south.spacingMax).toBeLessThan(grain.north.spacingMin);
+    expect(grain.south.deadEnd).toBeGreaterThan(grain.north.deadEnd);
+    let south = 0;
+    let north = 0;
+    for (const st of levelStreets(3).stripes) {
+      for (const a of st.alleys) {
+        const r = 1300;
+        const d = districtAt(r, a.theta0);
+        if (d === 'south') south++;
+        if (d === 'north') north++;
       }
-      // and the top of every lane climbing from the level below stays open
-      if (level > 0 && r - wallRadiusAt(level - 1, theta) < 12) {
-        for (const a of laneAngles(level - 1)) {
-          let da = theta - a;
-          da -= TAU * Math.round(da / TAU);
-          expect(Math.abs(da) * r).toBeGreaterThan(2.6 + (d.r ?? 0));
+    }
+    expect(south).toBeGreaterThan(north * 1.5);
+  });
+
+  it('keeps every alley wide enough to walk, with dead ends and skewed runs among them', () => {
+    let dead = 0;
+    let skewed = 0;
+    for (let level = 0; level < CITY_WALLS; level++) {
+      for (const st of levelStreets(level).stripes) {
+        for (const a of st.alleys) {
+          expect(a.halfWidth * 2).toBeGreaterThanOrEqual(2.4);
+          if (a.reach < 1) dead++;
+          if (Math.abs(a.theta1 - a.theta0) * 1000 > 3) skewed++;
         }
       }
     }
+    expect(dead).toBeGreaterThan(100);
+    expect(skewed).toBeGreaterThan(500);
   });
 
-  it('turns every house front toward the pit', () => {
-    for (const d of houses) {
-      const toPit = Math.atan2(-(d.x - cx), -(d.z - cz));
-      let diff = (d.rot ?? 0) - toPit;
-      diff -= TAU * Math.round(diff / TAU);
-      expect(Math.abs(diff)).toBeLessThan(0.75);
+  it('runs an alley down every stair lane so each one lands on a street', () => {
+    for (let level = 1; level < CITY_WALLS; level++) {
+      for (const lane of laneAngles(level - 1)) {
+        const r = wallRadiusAt(level - 1, lane) + 12;
+        expect(cityStreetAt(Math.cos(lane) * r, Math.sin(lane) * r)).toBe('street');
+      }
     }
   });
 
-  it('packs the poor south tighter than the north', () => {
-    const count = (district: string) =>
-      houses.filter((d) => {
-        const r = Math.hypot(d.x - cx, d.z - cz);
-        return districtAt(r, Math.atan2(d.z - cz, d.x - cx)) === district;
-      }).length;
-    expect(count('south')).toBeGreaterThan(count('north'));
+  it('leaves plazas open in every district', () => {
+    const seen = new Set<string>();
+    let total = 0;
+    for (let level = 0; level < CITY_WALLS; level++) {
+      for (const b of levelBlocks(level)) {
+        if (!b.plaza) continue;
+        total++;
+        const t = (b.a.theta0 + b.end0) / 2;
+        seen.add(districtAt(wallRadiusAt(level, t) - 30, t));
+      }
+    }
+    expect([...seen].sort()).toEqual(['centre', 'east', 'north', 'south', 'west']);
+    expect(total).toBeGreaterThan(60);
+    // one well per plaza, but for the few rim plazas left bare beside a landmark
+    expect(PROPS.wells.length).toBeLessThanOrEqual(total);
+    expect(PROPS.wells.length).toBeGreaterThan(total - 6);
   });
 
-  it('lays out the same city every time', () => {
+  it('cobbles the ring streets and alleys in the ground paint', () => {
+    const ring = levelStreets(2).rings[0];
+    const theta = 0.4;
+    const r = ringRadius(ring, theta);
+    const p = polar(r, theta);
+    expect(abyssSurfaceAt(p.x, p.z)).toBe('street');
+  });
+});
+
+describe('Rimholt blocks: houses on lots, plazas and parapets', () => {
+  it('builds a dense city within a bounded budget', () => {
+    expect(houses.length).toBeGreaterThan(10000);
+    expect(houses.length).toBeLessThan(30000);
+    const bad = houses.filter(
+      (d) =>
+        (d.hw ?? 0) <= 1.5 ||
+        (d.hd ?? 0) <= 1.5 ||
+        Math.abs((d.r ?? 0) - Math.hypot(d.hw ?? 0, d.hd ?? 0)) > 1e-6 ||
+        (d.h ?? 0) <= 3,
+    );
+    expect(bad).toEqual([]);
+  });
+
+  it('keeps every house off the avenues, the wall faces and the stair lanes', () => {
+    // collected, then asserted once: an expect per corner is too slow here
+    const bad: string[] = [];
+    for (const d of houses) {
+      for (const p of [d, ...corners(d)]) {
+        const x = p.x - cx;
+        const z = p.z - cz;
+        const hit = nearestAvenue(x, z);
+        if (hit.distance <= avenueHalfWidth(hit.index)) bad.push(`avenue ${d.x},${d.z}`);
+        const g = cityGround(x, z);
+        if (g.face >= 0.5) bad.push(`wall face ${d.x},${d.z}`);
+        const r = Math.hypot(x, z);
+        const theta = Math.atan2(z, x);
+        const level = levelAt(r, theta);
+        // a lane's ramp up the wall behind, and its top from the wall below
+        if (g.lane > 0 && wallRadiusAt(level, theta) - r <= LANE_RUN) {
+          bad.push(`lane ramp ${d.x},${d.z}`);
+        }
+        for (const a of [...laneAngles(level), ...(level > 0 ? laneAngles(level - 1) : [])]) {
+          let da = theta - a;
+          da -= TAU * Math.round(da / TAU);
+          if (Math.abs(da) * r <= LANE_HALF_WIDTH) bad.push(`lane ${d.x},${d.z}`);
+        }
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('never builds on a ring street or an alley', () => {
+    const onStreet: string[] = [];
+    for (const d of houses) {
+      const cs = corners(d);
+      // the centre, and each corner and edge midpoint pulled in a little
+      const probes = [d, ...cs, ...cs.map((p, i) => mid(p, cs[(i + 1) % 4]))].map((p) => ({
+        x: d.x + (p.x - d.x) * 0.9,
+        z: d.z + (p.z - d.z) * 0.9,
+      }));
+      if (probes.some((p) => cityStreetAt(p.x - cx, p.z - cz) === 'street')) {
+        onStreet.push(`${d.x.toFixed(1)},${d.z.toFixed(1)}`);
+      }
+    }
+    expect(onStreet).toEqual([]);
+  });
+
+  it('never stands one house inside another', () => {
+    // separating axes on every pair of nearby boxes, after a coarse grid
+    const grid = new Map<string, typeof houses>();
+    for (const d of houses) {
+      const k = `${Math.floor(d.x / 30)}:${Math.floor(d.z / 30)}`;
+      grid.set(k, [...(grid.get(k) ?? []), d]);
+    }
+    let overlaps = 0;
+    for (const d of houses) {
+      const gx = Math.floor(d.x / 30);
+      const gz = Math.floor(d.z / 30);
+      for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+          for (const o of grid.get(`${gx + i}:${gz + j}`) ?? []) {
+            if (o !== d && overlapDepth(d, o) > 0.3) overlaps++;
+          }
+        }
+      }
+    }
+    expect(overlaps).toBe(0);
+  });
+
+  it('fronts nearly every house onto a street or a walk', () => {
+    let fronted = 0;
+    const rows = houses.filter((d) => d.key !== 'rimTall');
+    for (const d of rows) {
+      const fx = Math.sin(d.rot ?? 0);
+      const fz = Math.cos(d.rot ?? 0);
+      for (let ahead = 0.5; ahead <= 6.5; ahead += 0.5) {
+        const x = d.x + fx * ((d.hd ?? 0) + ahead) - cx;
+        const z = d.z + fz * ((d.hd ?? 0) + ahead) - cz;
+        const g = cityGround(x, z);
+        const r = Math.hypot(x, z);
+        const theta = Math.atan2(z, x);
+        const level = levelAt(r, theta);
+        const walk = level === 0 ? r < PIT_RADIUS + 50 : r < wallRadiusAt(level - 1, theta) + 8;
+        if (cityStreetAt(x, z) !== null || g.avenue > 0.2 || g.lane > 0.2 || walk) {
+          fronted++;
+          break;
+        }
+      }
+    }
+    expect(fronted / rows.length).toBeGreaterThan(0.95);
+  });
+
+  it('builds each district its own way', () => {
+    const of = (district: string) => houses.filter((d) => districtOf(d) === district);
+    const meanWidth = (list: typeof houses) =>
+      list.reduce((sum, d) => sum + (d.hw ?? 0) * 2, 0) / list.length;
+    const share = (list: typeof houses, key: string) =>
+      list.filter((d) => d.key === key).length / list.length;
+    const south = of('south');
+    const north = of('north');
+    const east = of('east');
+    const west = of('west');
+    // the poor south: the most houses, the narrowest lots, the shacks
+    expect(south.length).toBeGreaterThan(north.length * 1.5);
+    expect(meanWidth(south)).toBeLessThan(meanWidth(north) * 0.7);
+    expect(share(south, 'rimShack')).toBeGreaterThan(0.2);
+    // the workshops of the east, the cottages of the west, the towers of the north
+    expect(share(east, 'rimWorkshop')).toBeGreaterThan(0.25);
+    expect(share(west, 'rimCottage')).toBeGreaterThan(0.3);
+    expect(share(north, 'rimTower')).toBeGreaterThan(share(south, 'rimTower') * 2);
+    // and the north builds taller than the west
+    const meanH = (list: typeof houses) => list.reduce((s, d) => s + (d.h ?? 0), 0) / list.length;
+    expect(meanH(north)).toBeGreaterThan(meanH(west) * 1.3);
+  });
+
+  it('keeps the arrival spot and the graveyard clear', () => {
+    // every solid city prop, houses and trees alike, by its footprint
+    const solid = (PROPS.decorProps ?? []).filter(
+      (d) => isRimholtBuilding(d.key) || (d.key === 'oakTree' && (d.r ?? 0) > 0),
+    );
+    const near = solid.filter(
+      (d) =>
+        Math.hypot(d.x - ABYSS_PLAYER_START.x, d.z - ABYSS_PLAYER_START.z) - (d.r ?? 0) <= 8 ||
+        Math.hypot(d.x - RIM_GRAVEYARD.x, d.z - RIM_GRAVEYARD.z) - (d.r ?? 0) <= 30,
+    );
+    expect(near).toEqual([]);
+  });
+
+  it('lays out the same city every time, and on every host', () => {
     const again = buildAbyssProps();
     expect(again.decorProps).toEqual(PROPS.decorProps);
     expect(again.fences).toEqual(PROPS.fences);
+    // a golden digest of every house, rounded: the street network and lots
+    // are cached at module load, so only a pinned value catches drift
+    // between hosts or an unintended change to the plan
+    let sum = 0;
+    for (const d of houses) {
+      sum +=
+        Math.round(d.x * 4) * 3 +
+        Math.round(d.z * 4) * 5 +
+        Math.round((d.hw ?? 0) * 4) * 7 +
+        Math.round((d.hd ?? 0) * 4) * 11 +
+        Math.round((d.h ?? 0) * 4) * 13;
+      sum = ((sum % 1_000_000_007) + 1_000_000_007) % 1_000_000_007;
+    }
+    expect({ houses: houses.length, digest: sum }).toEqual(GOLDEN);
   });
 
   it('runs a parapet along each wall top, open at the lanes and avenues', () => {
@@ -343,10 +590,9 @@ describe('Rimholt blocks: rows of houses, plazas and parapets', () => {
     }
   });
 
-  it('gives the city plazas with wells and stalls, and ring streets to light', () => {
-    expect(PROPS.wells.length).toBeGreaterThanOrEqual(15);
+  it('furnishes its plazas with wells and stalls, and lights its main streets', () => {
     expect(PROPS.stalls.length).toBeGreaterThanOrEqual(PROPS.wells.length);
-    // eight avenues, the rim ring, and three terrace ring streets
-    expect(abyssRoads()).toHaveLength(CITY_AVENUE_COUNT + 4);
+    // eight avenues, the rim ring, and the main ring street of every terrace
+    expect(abyssRoads()).toHaveLength(CITY_AVENUE_COUNT + CITY_WALLS);
   });
 });
